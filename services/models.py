@@ -50,6 +50,14 @@ class Photo(models.Model):
     def __unicode__(self):
         return str(self.pk) + '_' + self.title
 
+    # def save(self, *args, **kwargs):
+    #     """
+    #     Cada vez que guardamos una foto lo hacemos en
+    #     """
+    #     super(Coupon, self).save(*args, **kwargs)
+    #     if self.img:
+    #         resize_img_width(self.img.path, 350)
+
     def delete(self, *args, **kwargs):
         if self.img:
             delete_file(self.img)

@@ -19,5 +19,4 @@ def then_new_user_is_created(step):
 
 @step(u'And I receive a JSON response')
 def and_i_receive_a_json_response(step):
-    assert world.resp.status_code == 201
-    assert world.resp.content != ''
+    step.behave_as("""Then I receive a JSON response on client""");

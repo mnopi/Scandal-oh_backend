@@ -16,3 +16,14 @@ class CategoryFactory(DjangoModelFactory):
     name = factory.Sequence(lambda n: 'category_%s' % n)
 
 
+class PhotoFactory(DjangoModelFactory):
+    FACTORY_FOR = models.Photo
+
+    title = factory.Sequence(lambda n: 'title_%s' % n)
+    user = factory.SubFactory(CustomUserFactory)
+    category = factory.SubFactory(CategoryFactory)
+    img = factory.django.ImageField(color='green')
+
+
+
+

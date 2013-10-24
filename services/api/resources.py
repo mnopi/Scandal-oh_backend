@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import glob
 import json
+import re
 import urlparse
 from django.http import HttpResponse
 import simplejson
@@ -10,7 +11,7 @@ from tastypie.authorization import DjangoAuthorization
 from tastypie.resources import ModelResource
 from services.api.resource_authorization import ResourceAuthorization
 from services.models import *
-from services.utils import tx_json_to_multipart
+from services.utils import tx_json_to_multipart, delete_files, resize_img_width
 from settings.common import MEDIA_ROOT
 
 
@@ -63,12 +64,15 @@ class PhotoResource(MultipartResource, ModelResource):
             bundle.data = tx_json_to_multipart(bundle.request.body)
         super(type(self), self).obj_create(bundle)
         # en /media/ borra todos los archivos que comienzen por delete_me
-        for filename in glob.glob(os.path.join(MEDIA_ROOT, 'delete_me*')):
-            os.remove(filename)
+        delete_files(os.path.join(MEDIA_ROOT, 'delete_me*'))
         return self.obj_update(bundle)
 
-    # def obj_update(self, bundle, skip_errors=False, **kwargs):
-    #     return HttpResponse(simplejson.dumps(bundle.data), mimetype='application/json')
+    def obj_update(self, bundle, skip_errors=False, **kwargs):
+        obj = super(type(self), self).obj_update(bundle)
+        img_path_original = bundle.obj.img.file.name
+        img_path_resized = re.sub(r'(?:_a)?\.([^.]*)$', r'.p.\1', img_path_original)
+        resize_img_width(img_path_original, img_path_resized, 300)
+        return obj
 
 
 class CategoryResource(ModelResource):
