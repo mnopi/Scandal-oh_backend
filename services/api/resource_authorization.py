@@ -191,10 +191,11 @@ class ResourceAuthorization(Authorization):
     def update_detail(self, object_list, bundle):
         # return self.__user_can_access__(bundle)
         return True
-
+    #
     def delete_list(self, object_list, bundle):
         # Sorry user, no deletes for you!
         raise Unauthorized("Sorry, no deletes.")
 
     def delete_detail(self, object_list, bundle):
-        return self.__user_can_access__(bundle)
+        # return self.__user_can_access__(bundle)
+        return True

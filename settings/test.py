@@ -6,6 +6,7 @@ from settings import common
 common.TEST_MODE = True
 
 MEDIA_TEST = os.path.join(MEDIA_ROOT, 'test')
+TEST_FIXTURES = os.path.join(PROJECT_ROOT, 'tests', 'fixtures')
 
 # Usaremos sqlite3 como BD para testing
 DATABASES = {
@@ -23,14 +24,15 @@ INSTALLED_APPS += (
     'selenium',
     'django_nose',
     'lettuce.django',
+    'tests',
 )
 
 
 # LETTUCE
 #########################################
-# LETTUCE_APPS = (
-#     'map',
-# )
+LETTUCE_APPS = (
+    'tests',
+)
 # LETTUCE_AVOID_APPS = (
 #     'another_app',
 #     'foobar',

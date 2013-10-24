@@ -7,9 +7,9 @@ from django.test.utils import setup_test_environment, teardown_test_environment
 from django.core.management import call_command
 from django.db import connection
 from django.conf import settings
-from settings.common import MEDIA_ROOT
+import sys
 from settings.test import MEDIA_TEST
-from tests.runner import init_database
+from tests.utils import client
 
 
 @before.harvest
@@ -17,8 +17,10 @@ def initial_setup(server):
     call_command('syncdb', interactive=False, verbosity=0)
     call_command('flush', interactive=False, verbosity=0)
     try:
-        call_command('migrate', interactive=False, verbosity=0)
-    except Exception:
+        # si ya se ha migrado antes no hace falta volver a hacerlo
+        if 'services_customuser' not in connection.introspection.table_names():
+            call_command('migrate', interactive=False, verbosity=0)
+    except:
         pass
     # call_command('loaddata', 'all', verbosity=0)
     setup_test_environment()
@@ -26,16 +28,17 @@ def initial_setup(server):
 
 @after.harvest
 def cleanup(server):
-    connection.creation.destroy_test_db(settings.DATABASES['default']['NAME'])
+    # connection.creation.destroy_test_db(settings.DATABASES['default']['NAME'])
     teardown_test_environment()
+    world.browser.quit()
 
 @before.each_scenario
 def reset_data(scenario):
-    # Clean up django.
+    # Clean up database
     call_command('flush', interactive=False, verbosity=0)
+    # Reset /media/test folder
     if os.path.exists(MEDIA_TEST):
         shutil.rmtree(MEDIA_TEST)
-
     os.mkdir(MEDIA_TEST)
     # init_database()
     # call_command('loaddata', 'all', verbosity=0)
@@ -44,7 +47,3 @@ def reset_data(scenario):
 def delete_test_files(scenario):
     # eliminamos todos los archivos creados para el test
     shutil.rmtree(MEDIA_TEST)
-
-@after.all
-def teardown_browser(total):
-    world.browser.quit()

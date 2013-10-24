@@ -1,4 +1,4 @@
-Feature: Create photo
+Feature: CRUD photo
 
     Scenario: Create from enctype="multipart/form-data" HTML form
         Given A user created with username "mnopi" and password "1234"
@@ -9,7 +9,6 @@ Feature: Create photo
             And I press the "ok" button
         Then New photo is created
             And Photo file is uploaded
-            And I receive an JSON response
 
     Scenario: Create from JSON post
         Given A user created with username "mnopi" and password "1234"
@@ -17,4 +16,4 @@ Feature: Create photo
         When I send POST request with photo data in JSON format
         Then New photo is created
             And Photo file is uploaded
-            And I receive an JSON response
+            And I receive an JSON response on client

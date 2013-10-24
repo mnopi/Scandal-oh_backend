@@ -32,6 +32,8 @@ class CustomUserResource(ModelResource):
         resource_name = 'user'
         queryset = CustomUser.objects.all()
         authorization = ResourceAuthorization('user')
+        max_limit = 5000
+        always_return_data = True
         # filtering = {
         #     'id': ALL,
         #     'username': ALL,
@@ -60,6 +62,7 @@ class PhotoResource(MultipartResource, ModelResource):
         if bundle.request.META['CONTENT_TYPE'] == 'application/json':
             bundle.data = tx_json_to_multipart(bundle.request.body)
         super(type(self), self).obj_create(bundle)
+        # en /media/ borra todos los archivos que comienzen por delete_me
         for filename in glob.glob(os.path.join(MEDIA_ROOT, 'delete_me*')):
             os.remove(filename)
         return self.obj_update(bundle)

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+
+    <script src="{{ STATIC_URL }}vendor/jquery-2.0.3.min.js"></script>
+    <script>
+        var data = {
+            username: username,
+            password: password,
+            email: email
+        };
+        $.ajax({
+            url: '/api/v1/user/',
+            type: 'post',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify(data),
+            dataType: 'json', // esto indica que la respuesta vendrá en formato json
+            async: false,
+            success: function (response) {
+                new_element = response;
+            },
+            error: function (response) {
+                var j = response;
+            }
+        });
+    </script>
+</head>
+<body>
+</body>
+</html>
