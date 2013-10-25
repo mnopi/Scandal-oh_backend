@@ -58,7 +58,8 @@ MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media')
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
 # Examples: "http://example.com/media/", "http://media.example.com/"
-MEDIA_URL = '/media/'
+# MEDIA_URL = '/media/'
+MEDIA_URL = ''
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
@@ -175,6 +176,14 @@ AUTHENTICATION_BACKENDS = (
 #
 # TASTYPIE
 TASTYPIE_DEFAULT_FORMATS = ['json']
-API_LIMIT_PER_PAGE = 5000
+# API_LIMIT_PER_PAGE = 5000
 
 # APPEND_SLASH=False
+
+#
+# AMAZON BUCKET
+BUCKET_NAME = 'scandaloh'
+AWS_ACCESS_KEY_ID = 'AKIAJYHVOPSE2533MFRQ'
+AWS_SECRET_ACCESS_KEY = '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'
+BUCKET_URL = 'http://' + BUCKET_NAME + '.s3.amazonaws.com/'
+LOCAL_PATH = '/backup/s3/'

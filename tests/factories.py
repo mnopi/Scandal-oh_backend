@@ -1,3 +1,4 @@
+from django.utils.timezone import now
 from services import models
 import factory
 from factory import DjangoModelFactory
@@ -25,5 +26,10 @@ class PhotoFactory(DjangoModelFactory):
     img = factory.django.ImageField(color='green')
 
 
+class CommentFactory(DjangoModelFactory):
+    FACTORY_FOR = models.Comment
 
-
+    user = factory.SubFactory(CustomUserFactory)
+    photo = factory.SubFactory(PhotoFactory)
+    text = factory.Sequence(lambda n: 'this is comment_%s, bla bla blahh' % n)
+    date = factory.LazyAttribute(lambda x: now())

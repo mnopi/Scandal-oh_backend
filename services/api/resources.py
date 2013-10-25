@@ -11,7 +11,7 @@ from tastypie.authorization import DjangoAuthorization
 from tastypie.resources import ModelResource
 from services.api.resource_authorization import ResourceAuthorization
 from services.models import *
-from services.utils import tx_json_to_multipart, delete_files, resize_img_width
+from services.utils import tx_json_to_multipart, delete_files, resize_img_width, S3BucketHandler
 from settings.common import MEDIA_ROOT
 
 
@@ -33,7 +33,6 @@ class CustomUserResource(ModelResource):
         resource_name = 'user'
         queryset = CustomUser.objects.all()
         authorization = ResourceAuthorization('user')
-        max_limit = 5000
         always_return_data = True
         # filtering = {
         #     'id': ALL,
@@ -47,9 +46,8 @@ class PhotoResource(MultipartResource, ModelResource):
 
     class Meta:
         resource_name = 'photo'
-        queryset = Photo.objects.all()
+        queryset = Photo.objects.all().order_by('-date')
         authorization = ResourceAuthorization('user')
-        max_limit = 5000
         always_return_data = True
         filtering = {
             'user'
@@ -70,9 +68,19 @@ class PhotoResource(MultipartResource, ModelResource):
     def obj_update(self, bundle, skip_errors=False, **kwargs):
         obj = super(type(self), self).obj_update(bundle)
         img_path_original = bundle.obj.img.file.name
-        img_path_resized = re.sub(r'(?:_a)?\.([^.]*)$', r'.p.\1', img_path_original)
+        img_path_resized = bundle.obj.get_img_thumbnail_path()
         resize_img_width(img_path_original, img_path_resized, 300)
+        #
+        # subimos al bucket, eliminando los locales
+        print 'uploading files to bucket..'
+        b = S3BucketHandler()
+        b.push_file(img_path_original, bundle.obj.img.name)
+        b.push_file(img_path_resized, bundle.obj.get_img_thumbnail_name())
         return obj
+
+    def dehydrate(self, bundle):
+        bundle.data['comments_count'] = Comment.objects.filter(photo=bundle.obj).count()
+        return bundle
 
 
 class CategoryResource(ModelResource):

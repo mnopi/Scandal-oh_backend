@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import re
 
 from django.contrib.auth.models import User, UserManager, Group
 from django.db import models
@@ -62,6 +63,12 @@ class Photo(models.Model):
         if self.img:
             delete_file(self.img)
         super(Photo, self).delete(*args, **kwargs)
+
+    def get_img_thumbnail_name(self):
+        return re.sub(r'(?:_a)?\.([^.]*)$', r'.p.\1', self.img.name)
+
+    def get_img_thumbnail_path(self):
+        return re.sub(r'(?:_a)?\.([^.]*)$', r'.p.\1', self.img.path)
 
 
 class Comment(models.Model):

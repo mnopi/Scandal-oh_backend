@@ -36,7 +36,11 @@
            {% csrf_token %}
            <input type="file" name="img">
            <input type="text" name="title">
-           <input type="hidden" name="user" value="/api/v1/user/1/">
+           {% if test_mode %}
+                <input type="hidden" name="user" value="/api/v1/user/1/">
+           {% else %}
+                <input type="hidden" name="user" value="/api/v1/user/2/">
+           {% endif %}
            <input type="hidden" name="category" value="/api/v1/category/1/">
            <input type="submit" value="crear">
        </form>
