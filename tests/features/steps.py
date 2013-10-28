@@ -162,3 +162,42 @@ def and_comment_count_is_incremented_by_1_in_the_commented_photo(step):
     resp = client.get('/api/v1/photo/1/')
     dic = simplejson.loads(resp.content)
     assert dic['comments_count'] == 1
+
+@step(u'And Photo file is uploaded to amazon s3 bucket')
+def and_photo_file_is_uploaded_to_amazon_s3_bucket(step):
+    world.resp = urllib2.urlopen(BUCKET_URL + world.new_photo.img.name)
+    assert content_type_ok_ext('image/')
+
+@step(u'And Photo file is deleted from local server')
+def and_photo_file_is_deleted_from_local_server(step):
+    path = os.path.join(MEDIA_TEST, 'photos',
+                            'cat_' + str(world.new_photo.category.id),
+                            'photo_' + str(world.new_photo.id))
+    p_original = path + '.png'
+    assert not os.path.exists(p_original)
+
+    # al terminar el escenario borramos lo que hayamos subido de prueba al bucket
+    b = S3BucketHandler()
+    b.remove_file(world.new_photo.img.name)
+
+
+# @step(u'And both files are uploaded to amazon s3 bucket')
+# def and_both_files_are_uploaded_to_amazon_s3_bucket(step):
+#
+#     world.resp = urllib2.urlopen(BUCKET_URL + world.new_photo.get_img_thumbnail_name())
+#     assert content_type_ok_ext('image/')
+#
+# @step(u'And both files are deleted from local server')
+# def and_both_files_are_deleted_from_local_server(step):
+#     path = os.path.join(MEDIA_TEST, 'photos',
+#                         'cat_' + str(world.new_photo.category.id),
+#                         'photo_' + str(world.new_photo.id))
+#     p_original = path + '.png'
+#     p_thumb = path + '.p.png'
+#     assert not os.path.exists(p_original)
+#     assert not os.path.exists(p_thumb)
+#
+#     # al terminar el escenario borramos lo que hayamos subido de prueba al bucket
+#     b = S3BucketHandler()
+#     b.remove_file(world.new_photo.img.name)
+#     b.remove_file(world.new_photo.get_img_thumbnail_name())

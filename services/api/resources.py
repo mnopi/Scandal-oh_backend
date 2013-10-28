@@ -11,7 +11,7 @@ from tastypie.authorization import DjangoAuthorization
 from tastypie.resources import ModelResource
 from services.api.resource_authorization import ResourceAuthorization
 from services.models import *
-from services.utils import tx_json_to_multipart, delete_files, resize_img_width, S3BucketHandler
+from services.utils import *
 from settings.common import MEDIA_ROOT
 
 
@@ -67,15 +67,13 @@ class PhotoResource(MultipartResource, ModelResource):
 
     def obj_update(self, bundle, skip_errors=False, **kwargs):
         obj = super(type(self), self).obj_update(bundle)
-        img_path_original = bundle.obj.img.file.name
-        img_path_resized = bundle.obj.get_img_thumbnail_path()
-        resize_img_width(img_path_original, img_path_resized, 300)
+        img_original = bundle.obj.img.file.name
+        # img_path_resized = bundle.obj.get_img_thumbnail_path()
+        ImgResizer().resize(img_original)
         #
         # subimos al bucket, eliminando los locales
-        print 'uploading files to bucket..'
-        b = S3BucketHandler()
-        b.push_file(img_path_original, bundle.obj.img.name)
-        b.push_file(img_path_resized, bundle.obj.get_img_thumbnail_name())
+        S3BucketHandler().push_file(img_original, bundle.obj.img.name)
+        # b.push_file(img_path_resized, bundle.obj.get_img_thumbnail_name())
         return obj
 
     def dehydrate(self, bundle):

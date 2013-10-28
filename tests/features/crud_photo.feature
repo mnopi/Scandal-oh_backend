@@ -8,8 +8,10 @@ Feature: CRUD photo
             And I fill in "title" with "title bla bla bla"
             And I press the "ok" button
         Then New photo is created with title "title bla bla bla"
-            And both files are uploaded to amazon s3 bucket
-            And both files are deleted from local server
+#            And both files are uploaded to amazon s3 bucket
+#            And both files are deleted from local server
+            And Photo file is uploaded to amazon s3 bucket
+            And Photo file is deleted from local server
 
     Scenario: Create from JSON post
         Given A user created with username "mnopi" and password "1234"

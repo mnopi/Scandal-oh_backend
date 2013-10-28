@@ -51,25 +51,44 @@ def delete_files(path):
         os.remove(filename)
 
 
-def resize_img_width(img_path_from, img_path_to, fixed_width):
+class ImgResizer(object):
     """
-    Redimensiona una imágen dado el ancho deseado para guardarla donde queramos
+    Redimensionador de imagen. Se construye con un ancho y/o alto dados.
+
+    Ejemplos de uso:
+        ImgResizer().resize('/path/to/img_from.png', '/path/to/img_to.png')
+        ImgResizer().resize('/path/to/img_from.png', '/path/to/img_to.png', fixed_width=1024)
     """
-    img = Image.open(img_path_from)
-    if img.size[0] != fixed_width:
-        wpercent = (fixed_width / float(img.size[0]))
-        hsize = int((float(img.size[1]) * float(wpercent)))
-        img = img.resize((fixed_width, hsize), Image.ANTIALIAS)
-        img.save(img_path_to)
+    def __resize_width__(self):
+        """Redimensiona al ancho deseado"""
+        if self.img_width != self.fixed_width:
+            wpercent = (self.fixed_width / float(self.img_width))
+            hsize = int((float(self.img_height) * float(wpercent)))
+            self.new_img = self.img.resize((self.fixed_width, hsize), Image.ANTIALIAS)
 
+    def __resize_height__(self):
+        """Redimensiona al alto deseado"""
+        if self.img_height != self.fixed_height:
+            hpercent = (self.fixed_height / float(self.img_height))
+            wsize = int((float(self.img_width) * float(hpercent)))
+            self.new_img = self.img.resize((wsize, self.fixed_height), Image.ANTIALIAS)
 
-def resize_img_height(img_path, fixed_height):
-    img = Image.open(img_path)
-    if img.size[1] != fixed_height:
-        hpercent = (fixed_height / float(img.size[1]))
-        wsize = int((float(img.size[0]) * float(hpercent)))
-        img = img.resize((wsize, fixed_height), Image.ANTIALIAS)
-        img.save(img_path)
+    def resize(self, img_from, img_to=None, **kwargs):
+        self.fixed_width = kwargs['fixed_width'] if 'fixed_width' in kwargs else 480
+        self.fixed_height = kwargs['fixed_height'] if 'fixed_height' in kwargs else 640
+        self.img_from = img_from
+        # si no se da una imagen destino se sobreescribe la origen
+        self.img_to = img_to if img_to is not None else self.img_from
+        self.img = Image.open(img_from)
+        self.img_width = self.img.size[0]
+        self.img_height = self.img.size[1]
+
+        if self.img_width >= self.img_height:
+            self.__resize_width__()
+        else:
+            self.__resize_height__()
+
+        self.new_img.save(self.img_to)
 
 
 class S3BucketHandler(object):
