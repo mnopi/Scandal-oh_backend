@@ -88,10 +88,14 @@ class CategoryResource(ModelResource):
         resource_name = 'category'
         queryset = Category.objects.all()
         authorization = ResourceAuthorization('user')
+        always_return_data = True
 
 
 class CommentResource(ModelResource):
+    user = fields.ToOneField(CustomUserResource, 'user')
+    photo = fields.ToOneField(PhotoResource, 'photo')
     class Meta:
         resource_name = 'comment'
         queryset = Comment.objects.all()
         authorization = ResourceAuthorization('user')
+        always_return_data = True

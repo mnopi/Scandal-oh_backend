@@ -4,7 +4,7 @@ import urllib2
 from lettuce import step, world
 from lettuce.django import django_url
 import simplejson
-from services.models import Photo, CustomUser
+from services.models import Photo, CustomUser, Comment
 from services.utils import S3BucketHandler
 from settings.test import MEDIA_TEST, TEST_FIXTURES
 from tests.factories import *
@@ -137,6 +137,28 @@ def and_a_few_comments_on_this_photo(step):
 
 @step(u'Then I receive comments counter as part of that JSON data')
 def then_i_receive_comments_counter_as_part_of_that_json_data(step):
-    # todo: terminar prueba
     dic = simplejson.loads(world.resp.content)
     assert dic['comments_count'] == 5
+
+@step(u'When I send POST request with comment data in JSON format')
+def when_i_send_post_request_with_comment_data_in_json_format(step):
+    data = {
+        "user": "/api/v1/user/1/",
+        "photo": "/api/v1/photo/1/",
+        "text": "This is a comment bla bla bla",
+    }
+    world.resp = client.post('/api/v1/comment/', data=data)
+
+@step(u'Then New comment is created')
+def then_new_comment_is_created(step):
+    world.new_comment = Comment.objects.all().order_by('id').reverse()[0]
+    assert world.new_comment.text == "This is a comment bla bla bla"
+    assert world.new_comment.user == CustomUser.objects.get(pk=world.new_comment.user.id)
+    assert world.new_comment.photo == Photo.objects.get(pk=world.new_comment.photo.id)
+    assert world.new_comment.id is not None
+
+@step(u'And Comment count is incremented by 1 in the commented photo')
+def and_comment_count_is_incremented_by_1_in_the_commented_photo(step):
+    resp = client.get('/api/v1/photo/1/')
+    dic = simplejson.loads(resp.content)
+    assert dic['comments_count'] == 1
