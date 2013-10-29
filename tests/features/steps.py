@@ -180,6 +180,31 @@ def and_photo_file_is_deleted_from_local_server(step):
     b = S3BucketHandler()
     b.remove_file(world.new_photo.img.name)
 
+@step(u'Given a user with "([^"]*)":"([^"]*)"')
+def given_a_user_with_group1_group2(step, group1, group2):
+    world.user = CustomUserFactory(username=group1, password=group2)
+
+@step(u'When i log in with user "([^"]*)":"([^"]*)"')
+def when_i_log_in_with_user_group1_group2(step, group1, group2):
+    world.resp = client.post('/api/v1/user/login/', data=[group1, group2])
+    pass
+
+@step(u'Then user is logged in')
+def then_user_is_logged_in(step):
+    assert False, 'This step must be implemented'
+@step(u'Given a user with "([^"]*)":"([^"]*)":"([^"]*)"')
+def given_a_user_with_group1_group2_group3(step, group1, group2, group3):
+    assert False, 'This step must be implemented'
+@step(u'Given an user logged in')
+def given_an_user_logged_in(step):
+    assert False, 'This step must be implemented'
+@step(u'When i send GET request to logout url')
+def when_i_send_get_request_to_logout_url(step):
+    assert False, 'This step must be implemented'
+@step(u'Then user is logged out')
+def then_user_is_logged_out(step):
+    assert False, 'This step must be implemented'
+
 
 # @step(u'And both files are uploaded to amazon s3 bucket')
 # def and_both_files_are_uploaded_to_amazon_s3_bucket(step):

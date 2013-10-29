@@ -57,7 +57,9 @@ class ImgResizer(object):
 
     Ejemplos de uso:
         ImgResizer().resize('/path/to/img_from.png', '/path/to/img_to.png')
-        ImgResizer().resize('/path/to/img_from.png', '/path/to/img_to.png', fixed_width=1024)
+
+        En este caso se sobreescribirá, con un ancho dado de 1024px
+            ImgResizer().resize('/path/to/img_from.png', fixed_width=1024)
     """
     def __resize_width__(self):
         """Redimensiona al ancho deseado"""

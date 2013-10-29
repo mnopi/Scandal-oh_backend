@@ -1,7 +1,9 @@
+import shutil
 from django.contrib.auth.models import Group
 from django.test import LiveServerTestCase
 from django_nose import NoseTestSuiteRunner
 from splinter import Browser
+from settings.test import MEDIA_TEST
 
 
 def init_database():
@@ -25,5 +27,9 @@ class SplinterTestCase(LiveServerTestCase):
 class MyTestRunner(NoseTestSuiteRunner):
     def setup_databases(self, **kwargs):
         o = super(MyTestRunner, self).setup_databases()
-        init_database()
+        # init_database()
         return o
+
+    def teardown_test_environment(self):
+        super(MyTestRunner, self).teardown_test_environment()
+        shutil.rmtree(MEDIA_TEST)
