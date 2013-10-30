@@ -51,26 +51,55 @@ class CustomUserResource(ModelResource):
                 name="api_login_user"),
         ]
 
+    def get_dehydrated_user(self, user_obj, request):
+        """
+        obtiene el usuario en formato tastypie
+        """
+        r = CustomUserResource()
+        bundle = r.build_bundle(obj=user_obj, request=request)
+        return r.full_dehydrate(bundle).data
+
     def login_user(self, request, **kwargs):
         if request.method == 'POST':
             posted_data = simplejson.loads(request.body)
-            username = email = posted_data[0]
-            password = posted_data[1]
+            username = email = posted_data['username_email']
+            password = posted_data['password']
+            resp_error = {'status': 'error',}
+            resp_ok = {'status': 'ok',}
+            resp = None
             user = authenticate(username=username, password=password)
             if user is None:
                 # si falla con el nombre de usuario se comprueba con el email
-                username = CustomUser.objects.get(email=email).username
-                user = authenticate(username=username, password=password)
-            if user is not None:
-                if user.is_active:
-                    login(request, user)
-                    return self.get_detail(request)
+                users_with_that_username = CustomUser.objects.filter(username=username)
+                users_with_that_email = CustomUser.objects.filter(email=email)
+                if users_with_that_username:
+                    resp_error['reason'] = 'invalid password'
+                    resp_error['reason_code'] = 2
+                    resp = resp_error
+                elif not users_with_that_email:
+                    resp_error['reason'] = 'invalid username/email'
+                    resp_error['reason_code'] = 1
+                    resp = resp_error
+                else:
+                    # si hay usuario con ese email..
+                    username = users_with_that_email[0].username
+                    user = authenticate(username=username, password=password)
+                    if user is not None:
+                        if user.is_active:
+                            login(request, user)
+                            resp_ok['user_uri'] = user.id
+                            resp = resp_ok
+                    else:
+                        # email ok pero password no
+                        resp_error['reason'] = 'invalid password'
+                        resp_error['reason_code'] = 2
+                        resp = resp_error
             else:
-                resp = {
-                    'status': 'error',
-                    'reason': 'invalid login data',
-                }
-                return HttpResponse(simplejson.dumps(resp), mimetype="application/json")
+                # si hay usuario con ese username..
+                resp_ok['user_uri'] = self.get_dehydrated_user(user, request)['resource_uri']
+                resp = resp_ok
+
+            return HttpResponse(simplejson.dumps(resp), mimetype="application/json")
 
 
 class PhotoResource(MultipartResource, ModelResource):
@@ -103,13 +132,15 @@ class PhotoResource(MultipartResource, ModelResource):
     def obj_update(self, bundle, skip_errors=False, **kwargs):
         obj = super(type(self), self).obj_update(bundle)
         img_original = bundle.obj.img.file.name
-        # img_path_resized = bundle.obj.get_img_thumbnail_path()
         ImgResizer().resize(img_original)
-        #
-        # subimos al bucket, eliminando los locales
+        # subimos al bucket, eliminando la imagen local
         S3BucketHandler().push_file(img_original, bundle.obj.img.name)
-        # b.push_file(img_path_resized, bundle.obj.get_img_thumbnail_name())
         return obj
+
+    def obj_delete(self, bundle, **kwargs):
+        super(type(self), self).obj_delete(bundle)
+        # eliminamos la imagen del bucket
+        S3BucketHandler().remove_file(bundle.obj.img.name)
 
     def dehydrate(self, bundle):
         bundle.data['comments_count'] = Comment.objects.filter(photo=bundle.obj).count()
@@ -132,7 +163,7 @@ class CommentResource(ModelResource):
     photo = fields.ToOneField(PhotoResource, 'photo')
     class Meta:
         resource_name = 'comment'
-        queryset = Comment.objects.all()
+        queryset = Comment.objects.all().order_by('-date')
         authorization = ResourceAuthorization('user')
         always_return_data = True
         filtering = {

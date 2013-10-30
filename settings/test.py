@@ -23,25 +23,28 @@ DATABASES = {
 INSTALLED_APPS += (
     'selenium',
     'django_nose',
-    'lettuce.django',
+    # 'lettuce.django',
     'tests',
 )
 
 
 # LETTUCE
 #########################################
-LETTUCE_APPS = (
-    'tests',
-)
+# LETTUCE_APPS = (
+#     'tests',
+# )
 # LETTUCE_AVOID_APPS = (
 #     'another_app',
 #     'foobar',
 # )
-LETTUCE_SERVER_PORT = 7000
+# LETTUCE_SERVER_PORT = 7000
 #########################################
 
 
 # NOSE
 #########################################
 TEST_RUNNER = 'tests.runner.MyTestRunner'
+NOSE_ARGS = [
+    '-s', # para activar stdout (salida a consola) durante los tests
+]
 #########################################

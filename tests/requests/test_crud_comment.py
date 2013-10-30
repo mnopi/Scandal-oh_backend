@@ -11,14 +11,14 @@ from tests.utils import client, API_BASE_URI
 class CrudCommentTest(TestCase):
     def test_create_comment(self):
         # given
-        PhotoFactory.create_batch(2)
+        CommentFactory.create_batch(2)
         # when
-        data = {
+        data = simplejson.dumps({
             "user": "/api/v1/user/1/",
             "photo": "/api/v1/photo/1/",
             "text": "This is a comment bla bla bla"
-        }
-        resp = client.post(API_BASE_URI + 'comment/', data=data)
+        })
+        resp = client.post(API_BASE_URI + 'comment/', data=data, content_type='application/json')
         # then
         assert resp.status_code == 201
         new_comment = Comment.objects.all().order_by('id').reverse()[0]
@@ -49,11 +49,13 @@ class CrudCommentTest(TestCase):
         # given
         CommentFactory(text='comment original blahblah')
         # when
-        text_edited = 'comment edited!!'
-        resp = client.put(API_BASE_URI + 'comment/1/', data={'text': text_edited})
+        data = simplejson.dumps({
+            'text': 'comment edited!!'
+        })
+        resp = client.put(API_BASE_URI + 'comment/1/', data=data, content_type='application/json')
         # then
         assert resp.status_code == 200
-        assert simplejson.loads(resp.content)['text'] == text_edited
+        assert simplejson.loads(resp.content)['text'] == 'comment edited!!'
 
     def test_delete_comment(self):
         # given

@@ -4,6 +4,7 @@ from django.test import LiveServerTestCase
 from django_nose import NoseTestSuiteRunner
 from splinter import Browser
 from settings.test import MEDIA_TEST
+from tests.utils import reset_media_test_folder
 
 
 def init_database():
@@ -29,6 +30,10 @@ class MyTestRunner(NoseTestSuiteRunner):
         o = super(MyTestRunner, self).setup_databases()
         # init_database()
         return o
+
+    def setup_test_environment(self, **kwargs):
+        super(MyTestRunner, self).setup_test_environment()
+        reset_media_test_folder()
 
     def teardown_test_environment(self):
         super(MyTestRunner, self).teardown_test_environment()

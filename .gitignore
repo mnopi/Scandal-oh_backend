@@ -172,3 +172,4 @@ af_log.txt
 
 static/
 test_db
+*.sql

@@ -1,9 +1,11 @@
 import os
+import shutil
 import urllib2
 from django.test.client import Client
 from lettuce import world
 from tastypie.test import TestApiClient
 from settings.common import PROJECT_ROOT, BUCKET_URL
+from settings.test import MEDIA_TEST
 
 
 def saved_only_one_instance_ok(instance_class):
@@ -35,5 +37,12 @@ client = Client()
 API_BASE_URI = '/api/v1/'
 TEST_IMGS_PATH = os.path.join(PROJECT_ROOT, 'tests', 'fixtures', 'imgs')
 
+
 def get_file_from_bucket(file_id):
     return urllib2.urlopen(BUCKET_URL + file_id)
+
+
+def reset_media_test_folder():
+    if os.path.exists(MEDIA_TEST):
+        shutil.rmtree(MEDIA_TEST)
+    os.mkdir(MEDIA_TEST)
