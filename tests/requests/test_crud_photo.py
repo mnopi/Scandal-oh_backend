@@ -52,13 +52,13 @@ class CrudPhotoTest(TestCase):
         path = os.path.join(MEDIA_TEST, 'photos',
                             'cat_' + str(new_photo.category.id),
                             'photo_' + str(new_photo.id))
-        for file_extension in ['.png', '.jpg']:
+        for file_extension in ['.png', '.jpg', '.caf']:
             assert not os.path.exists(path + file_extension)
             assert not os.path.exists(path + '.p' + file_extension)
         #   AND quitamos del bucket los archivos subidos de prueba
-        S3BucketHandler().remove_file(new_photo.img.name)
-        S3BucketHandler().remove_file(new_photo.get_img_p_name())
-        S3BucketHandler().remove_file(new_photo.sound.name)
+        S3BucketHandler.remove_file(new_photo.img.name)
+        S3BucketHandler.remove_file(new_photo.get_img_p_name())
+        S3BucketHandler.remove_file(new_photo.sound.name)
         check_from_bucket(file_list, check_removed=True)
 
     def test_read_photo_list(self):

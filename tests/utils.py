@@ -76,3 +76,8 @@ def reset_media_test_folder():
     if os.path.exists(MEDIA_TEST):
         shutil.rmtree(MEDIA_TEST)
     os.mkdir(MEDIA_TEST)
+
+def reset_folder(folder_path):
+    if os.path.exists(folder_path):
+        shutil.rmtree(folder_path)
+    os.mkdir(folder_path)

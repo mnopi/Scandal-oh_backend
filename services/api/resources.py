@@ -21,6 +21,7 @@ from services.forms import CustomUserRegisterForm, CustomUserLoginForm
 from services.models import *
 from services.utils import *
 from settings.common import MEDIA_ROOT
+from tests.utils import reset_folder
 
 
 class MultipartResource(object):
@@ -154,19 +155,24 @@ class PhotoResource(MultipartResource, ModelResource):
     def obj_update(self, bundle, skip_errors=False, **kwargs):
         obj = super(type(self), self).obj_update(bundle)
         img_original = bundle.obj.img.path
-        ImgResizer().resize(img_original)
+        # comprimimos y redimensionamos la imagen original
+        i = ImgHelper()
+        i.compress(img_original)
+        i.resize(img_original)
         # subimos archivos al bucket, eliminando los locales
-        S3BucketHandler().push_file(img_original, bundle.obj.img.name)
-        S3BucketHandler().push_file(bundle.obj.get_img_p_path(), bundle.obj.get_img_p_name())
-        S3BucketHandler().push_file(bundle.obj.sound.path, bundle.obj.sound.name)
+        S3BucketHandler.push_file(img_original, bundle.obj.img.name)
+        S3BucketHandler.push_file(bundle.obj.get_img_p_path(), bundle.obj.get_img_p_name())
+        S3BucketHandler.push_file(bundle.obj.sound.path, bundle.obj.sound.name)
+        # nos aseguramos que dejamos /media limpia
+        reset_folder(MEDIA_ROOT)
         return obj
 
     def obj_delete(self, bundle, **kwargs):
         super(type(self), self).obj_delete(bundle)
         # eliminamos la imagen del bucket
-        S3BucketHandler().remove_file(bundle.obj.img.name)
-        S3BucketHandler().remove_file(bundle.obj.get_img_p_name())
-        S3BucketHandler().remove_file(bundle.obj.sound.name)
+        S3BucketHandler.remove_file(bundle.obj.img.name)
+        S3BucketHandler.remove_file(bundle.obj.get_img_p_name())
+        S3BucketHandler.remove_file(bundle.obj.sound.name)
 
     def dehydrate(self, bundle):
         bundle.data['comments_count'] = Comment.objects.filter(photo=bundle.obj).count()

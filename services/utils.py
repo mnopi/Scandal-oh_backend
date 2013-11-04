@@ -52,16 +52,10 @@ def delete_files(path):
         os.remove(filename)
 
 
-class ImgResizer(object):
-    """
-    Redimensionador de imagen. Se construye con un ancho y/o alto dados.
+class ImgHelper(object):
+    COMPRESSOR = 'JPEG'
+    COMPRESSION_FACTOR = 80
 
-    Ejemplos de uso:
-        ImgResizer().resize('/path/to/img_from.png', '/path/to/img_to.png')
-
-        En este caso se sobreescribirá, con un ancho dado de 1024px
-            ImgResizer().resize('/path/to/img_from.png', fixed_width=1024)
-    """
     def __resize_width__(self):
         """Redimensiona al ancho deseado"""
         if self.img_width != self.fixed_width:
@@ -77,6 +71,15 @@ class ImgResizer(object):
             self.new_img = self.img.resize((wsize, self.fixed_height), Image.ANTIALIAS)
 
     def resize(self, img_from, img_to=None, **kwargs):
+        """
+        Redimensionador de imagen. Se construye con un ancho y/o alto dados.
+
+        Ejemplos de uso:
+            ImgResizer().resize('/path/to/img_from.png', '/path/to/img_to.png')
+
+        En este caso se sobreescribirá, con un ancho dado de 1024px
+            ImgResizer().resize('/path/to/img_from.png', fixed_width=1024)
+        """
         self.fixed_width = kwargs['fixed_width'] if 'fixed_width' in kwargs else 480
         self.fixed_height = kwargs['fixed_height'] if 'fixed_height' in kwargs else 640
         self.img_from = img_from
@@ -94,23 +97,27 @@ class ImgResizer(object):
         if hasattr(self, 'new_img'):
             self.new_img.save(self.img_to)
 
+    def compress(self, img_original_path):
+        "Comprime la imagen dada, sobreescribiéndola"
+        img = Image.open(img_original_path)
+        img.save(img_original_path, self.COMPRESSOR, quality=self.COMPRESSION_FACTOR)
 
-class S3BucketHandler(object):
 
-    def __init__(self):
-        # set boto lib debug to critical
-        logging.getLogger('boto').setLevel(logging.CRITICAL)
-        # connect to the bucket
-        conn = boto.connect_s3(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
-        self.bucket = conn.get_bucket(BUCKET_NAME)
+class S3BucketHandler:
+    # set boto lib debug to critical
+    logging.getLogger('boto').setLevel(logging.CRITICAL)
+    # connect to the bucket
+    conn = boto.connect_s3(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+    bucket = conn.get_bucket(BUCKET_NAME)
 
-    def push_file(self, fn, file_id):
+    @classmethod
+    def push_file(cls, fn, file_id):
         """
         fn: archivo a subir, e.g. /var/www/data/paquillo.png
         file_id: para identificar el archivo dentro del bucket
         """
         # create a key to keep track of our file in the storage
-        k = Key(self.bucket)
+        k = Key(cls.bucket)
         k.key = file_id
         k.set_contents_from_filename(fn)
         # we need to make it public so it can be accessed publicly
@@ -120,18 +127,20 @@ class S3BucketHandler(object):
         # remove the file from the web server
         os.remove(fn)
 
-    def remove_file(self, file_id):
+    @classmethod
+    def remove_file(cls, file_id):
         "Quita archivo del bucket"
-        k = Key(self.bucket)
+        k = Key(cls.bucket)
         k.key = file_id
-        self.bucket.delete_key(k)
+        cls.bucket.delete_key(k)
 
-    def make_backup(self):
+    @classmethod
+    def make_backup(cls):
         """
         Hace copia de seguridad en LOCAL_PATH de todos los archivos
         alojados en el bucket
         """
-        bucket_list = self.bucket.list()
+        bucket_list = cls.bucket.list()
         for l in bucket_list:
             keyString = str(l.key)
             # check if file exists locally, if not: download it

@@ -121,7 +121,7 @@ def and_both_files_are_deleted_from_local_server(step):
 
     # al terminar el escenario borramos lo que hayamos subido de prueba al bucket
     b = S3BucketHandler()
-    b.remove_file(world.new_photo.img.name)
+    S3BucketHandler.remove_file(world.new_photo.img.name)
     b.remove_file(world.new_photo.get_img_p_name())
 
 @step(u'Given A photo created')
