@@ -1,9 +1,9 @@
+# -*- coding: utf-8 -*-
+
 import os
 import shutil
 import urllib2
 from django.test.client import Client
-from lettuce import world
-from tastypie.test import TestApiClient
 from settings.common import PROJECT_ROOT, BUCKET_URL
 from settings.test import MEDIA_TEST
 

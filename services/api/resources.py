@@ -5,6 +5,7 @@ import re
 import urlparse
 from django.conf.urls import url
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from django.views.decorators.http import require_http_methods
@@ -14,13 +15,16 @@ from tastypie.authorization import DjangoAuthorization
 from tastypie.constants import ALL, ALL_WITH_RELATIONS
 
 from tastypie.resources import ModelResource
+from tastypie.validation import FormValidation
 from services.api.resource_authorization import ResourceAuthorization
+from services.forms import CustomUserRegisterForm, CustomUserLoginForm
 from services.models import *
 from services.utils import *
 from settings.common import MEDIA_ROOT
 
 
 class MultipartResource(object):
+    "https://github.com/toastdriven/django-tastypie/issues/42#issuecomment-5485666"
     def deserialize(self, request, data, format=None):
         if not format:
             format = request.META.get('CONTENT_TYPE', 'application/json')
@@ -32,13 +36,23 @@ class MultipartResource(object):
             return data
         return super(MultipartResource, self).deserialize(request, data, format)
 
+class ErrorResponseMixin(object):
+    def error_response(self, request, errors, response_class=None):
+        full_errors = {
+            'status': 'error',
+            'reason': errors
+        }
+        return super(ErrorResponseMixin, self).error_response(request, full_errors, response_class=HttpResponse)
 
-class CustomUserResource(ModelResource):
+
+
+class CustomUserResource(ErrorResponseMixin, ModelResource):
     class Meta:
         resource_name = 'user'
         queryset = CustomUser.objects.all()
         authorization = ResourceAuthorization('user')
         always_return_data = True
+        validation = FormValidation(form_class=CustomUserRegisterForm)
         # filtering = {
         #     'id': ALL,
         #     'username': ALL,
@@ -95,9 +109,17 @@ class CustomUserResource(ModelResource):
                         resp_error['reason_code'] = 2
                         resp = resp_error
             else:
-                # si hay usuario con ese username..
+                # si hay usuario con ese username, entonces el login es correcto
                 resp_ok['user_uri'] = self.get_dehydrated_user(user, request)['resource_uri']
                 resp = resp_ok
+
+            # si no están bien los campos del formulario devolverá un error
+            form = CustomUserLoginForm({'username_email': posted_data['username_email'], 'password': posted_data['password']})
+            if not form.is_valid():
+                resp_error['reason'] = 'invalid form data'
+                resp_error['reason_details'] = form.errors
+                resp_error['reason_code'] = 3
+                resp = resp_error
 
             return HttpResponse(simplejson.dumps(resp), mimetype="application/json")
 
@@ -144,6 +166,8 @@ class PhotoResource(MultipartResource, ModelResource):
 
     def dehydrate(self, bundle):
         bundle.data['comments_count'] = Comment.objects.filter(photo=bundle.obj).count()
+        bundle.data['latitude'] = -1 if bundle.data['latitude'] == 0 else bundle.data['latitude']
+        bundle.data['longitude'] = -1 if bundle.data['longitude'] == 0 else bundle.data['longitude']
         return bundle
 
 

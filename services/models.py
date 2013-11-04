@@ -3,9 +3,13 @@ import os
 import re
 
 from django.contrib.auth.models import User, UserManager, Group
+from django.core import validators
+from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.db import models
 from services.utils import delete_file
 from settings.common import TEST_MODE
+from django.utils.translation import ugettext_lazy as _
 
 class CustomUser(User):
     class Meta:
@@ -44,8 +48,8 @@ class Photo(models.Model):
     title = models.CharField(max_length=140, blank=False, null=False)
     img = models.FileField(upload_to=get_photo_path, null=True, blank=True)
     visits_count = models.PositiveIntegerField(default=0, blank=True)
-    latitude = models.FloatField(null=True, blank=True)
-    longitude = models.FloatField(null=True, blank=True)
+    latitude = models.FloatField(null=True, blank=True, default=-1)
+    longitude = models.FloatField(null=True, blank=True, default=-1)
     date = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):

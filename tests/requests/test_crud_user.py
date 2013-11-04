@@ -60,4 +60,3 @@ class CrudUserTest(TestCase):
         # then
         assert resp.status_code == 204
         assert CustomUser.objects.all().count() == 0
-
