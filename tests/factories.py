@@ -1,7 +1,9 @@
+import os
 from django.utils.timezone import now
 from services import models
 import factory
 from factory import DjangoModelFactory
+from tests.utils import TEST_SOUNDS_PATH
 
 
 class CustomUserFactory(DjangoModelFactory):
@@ -24,6 +26,7 @@ class PhotoFactory(DjangoModelFactory):
     user = factory.SubFactory(CustomUserFactory)
     category = factory.SubFactory(CategoryFactory)
     img = factory.django.ImageField(color='green')
+    sound = factory.django.FileField(filename=os.path.join(TEST_SOUNDS_PATH, 'European Siren.caf'))
 
 
 class CommentFactory(DjangoModelFactory):

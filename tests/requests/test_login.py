@@ -117,76 +117,39 @@ class LoginTest(TestCase):
 #
 # VALIDATION
 #
-
-def validation_username(username, password):
-    # GIVEN
-    user = CustomUserFactory(username=username, password=password)
+def login_form_validation(username, password):
     # WHEN
     data = simplejson.dumps({
         'username_email': username,
         'password': password,
         })
-    validation(user, data)
-
-
-def validation_email(email, password):
-    # GIVEN
-    user = CustomUserFactory(email=email, password=password)
-    # WHEN
-    data = simplejson.dumps({
-        'username_email': email,
-        'password': password,
-        })
-    validation(user, data)
-
-
-def validation(user, data):
     resp = client.post(API_BASE_URI + 'user/login/', data=data, content_type='application/json')
     # THEN
     assert resp.status_code == 200
     resp_content = simplejson.loads(resp.content)
     assert resp_content['status'] == 'error'
     assert resp_content['reason_code'] == 3
-    user.delete()
 
 
-class ValidFormLoginTest(TestCase):
+class LoginFormValidationTest(TestCase):
     """
         Prueba con campos mal escritos en formulario de login.
 
-        username ok, password FAIL
-        username FAIL, password ok
-        username FAIL, password FAIL
-        email ok, password FAIL
-        email FAIL, password ok
-        email FAIL, password FAIL
+        username_email ok, password FAIL
+        username_email FAIL, password ok
+        username_email FAIL, password FAIL
     """
-    def test_login_validation_with_ok_usernames_and_fail_passwords(self):
-        for u in valid_usernames:
-            for p in invalid_passwords:
-                validation_username(u, p)
+    def test_with_valid_usernames_emails_and_invalid_passwords(self):
+        for u in usernames_emails['valids']:
+            for p in passwords['invalids']:
+                login_form_validation(u, p)
 
-    def test_login_validation_with_fail_usernames_and_ok_passwords(self):
-        for u in invalid_usernames:
-            for p in valid_passwords:
-                validation_username(u, p)
+    def test_with_invalid_usernames_emails_and_valid_passwords(self):
+        for u in usernames_emails['invalids']:
+            for p in passwords['valids']:
+                login_form_validation(u, p)
 
-    def test_login_validation_with_fail_usernames_and_fail_passwords(self):
-        for u in invalid_usernames:
-            for p in invalid_passwords:
-                validation_username(u, p)
-
-    def test_login_validation_with_ok_emails_and_fail_passwords(self):
-        for u in valid_emails:
-            for p in invalid_passwords:
-                validation_email(u, p)
-
-    def test_login_validation_with_fail_emails_and_ok_passwords(self):
-        for u in invalid_emails:
-            for p in valid_passwords:
-                validation_email(u, p)
-
-    def test_login_validation_with_fail_emails_and_fail_passwords(self):
-        for u in invalid_emails:
-            for p in invalid_passwords:
-                validation_email(u, p)
+    def test_with_invalid_usernames_emails_and_invalid_passwords(self):
+        for u in usernames_emails['invalids']:
+            for p in passwords['invalids']:
+                login_form_validation(u, p)

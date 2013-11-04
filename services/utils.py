@@ -3,6 +3,7 @@ from StringIO import StringIO
 import glob
 import logging
 import os
+import re
 from PIL import Image
 from boto.s3.connection import S3Connection
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -79,8 +80,8 @@ class ImgResizer(object):
         self.fixed_width = kwargs['fixed_width'] if 'fixed_width' in kwargs else 480
         self.fixed_height = kwargs['fixed_height'] if 'fixed_height' in kwargs else 640
         self.img_from = img_from
-        # si no se da una imagen destino se sobreescribe la origen
-        self.img_to = img_to if img_to is not None else self.img_from
+        # si no se da una imagen destino se crea igual que la origen renombrada a .p
+        self.img_to = img_to if img_to is not None else rename_string(self.img_from)
         self.img = Image.open(img_from)
         self.img_width = self.img.size[0]
         self.img_height = self.img.size[1]
@@ -90,7 +91,8 @@ class ImgResizer(object):
         else:
             self.__resize_height__()
 
-        self.new_img.save(self.img_to)
+        if hasattr(self, 'new_img'):
+            self.new_img.save(self.img_to)
 
 
 class S3BucketHandler(object):
@@ -136,3 +138,6 @@ class S3BucketHandler(object):
             if not os.path.exists(LOCAL_PATH + keyString):
                 l.get_contents_to_filename(LOCAL_PATH + keyString)
 
+
+def rename_string(filename):
+    return re.sub(r'(?:_a)?\.([^.]*)$', r'.p.\1', filename)

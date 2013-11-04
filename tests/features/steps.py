@@ -106,7 +106,7 @@ def and_i_can_read_the_photo_file_referenced_in_the_json_object(step):
 def and_both_files_are_uploaded_to_amazon_s3_bucket(step):
     world.resp = urllib2.urlopen(BUCKET_URL + world.new_photo.img.name)
     assert content_type_ok_ext('image/')
-    world.resp = urllib2.urlopen(BUCKET_URL + world.new_photo.get_img_thumbnail_name())
+    world.resp = urllib2.urlopen(BUCKET_URL + world.new_photo.get_img_p_name())
     assert content_type_ok_ext('image/')
 
 @step(u'And both files are deleted from local server')
@@ -122,7 +122,7 @@ def and_both_files_are_deleted_from_local_server(step):
     # al terminar el escenario borramos lo que hayamos subido de prueba al bucket
     b = S3BucketHandler()
     b.remove_file(world.new_photo.img.name)
-    b.remove_file(world.new_photo.get_img_thumbnail_name())
+    b.remove_file(world.new_photo.get_img_p_name())
 
 @step(u'Given A photo created')
 def given_a_photo_created(step):

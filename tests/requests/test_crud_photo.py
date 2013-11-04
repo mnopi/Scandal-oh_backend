@@ -8,7 +8,8 @@ from settings.test import MEDIA_TEST
 from tests.factories import *
 
 from tests.runner import SplinterTestCase
-from tests.utils import client, API_BASE_URI, TEST_IMGS_PATH, get_file_from_bucket, content_type_ok_ext, reset_media_test_folder
+from tests.utils import client, API_BASE_URI, TEST_IMGS_PATH, get_file_from_bucket, content_type_ok_ext, reset_media_test_folder, check_from_bucket, TEST_SOUNDS_PATH
+
 
 def create_photo():
     # GIVEN
@@ -17,14 +18,16 @@ def create_photo():
     CategoryFactory()
     # WHEN
     #   envío la foto al servidor
-    with open(os.path.join(TEST_IMGS_PATH, 'test_img_portrait.png')) as img:
-        data = {
-            "user": "/api/v1/user/1/",
-            "category": "/api/v1/category/1/",
-            "title": "This is a title bla bla bla",
-            "img": img
-        }
-        return client.post(API_BASE_URI + 'photo/', data=data)
+    with open(os.path.join(TEST_IMGS_PATH, 'test_img_portrait.jpg')) as img:
+        with open(os.path.join(TEST_SOUNDS_PATH, 'European Siren.caf')) as sound:
+            data = {
+                "user": "/api/v1/user/1/",
+                "category": "/api/v1/category/1/",
+                "title": "This is a title bla bla bla",
+                "img": img,
+                "sound": sound
+            }
+            return client.post(API_BASE_URI + 'photo/', data=data)
 
 
 class CrudPhotoTest(TestCase):
@@ -38,22 +41,25 @@ class CrudPhotoTest(TestCase):
         assert resp.status_code == 201
         new_photo = Photo.objects.all()[0]
         assert new_photo.id is not None
-        #   AND que el archivo se haya subido correctamente al bucket
-        resp = get_file_from_bucket(new_photo.img.name)
-        assert content_type_ok_ext(resp, 'image/')
-        #   AND que el archivo en servidor local esté eliminado
+        file_list = [
+            new_photo.img.name,
+            new_photo.get_img_p_name(),
+            new_photo.sound.name
+        ]
+        #   AND que los archivos se hayan subido correctamente al bucket
+        check_from_bucket(file_list)
+        #   AND que los archivos en servidor local estén eliminados
         path = os.path.join(MEDIA_TEST, 'photos',
                             'cat_' + str(new_photo.category.id),
-                            'photo_' + str(new_photo.id) + '.png')
-        assert not os.path.exists(path)
-        #   AND quitamos del bucket la imagen subida de prueba
+                            'photo_' + str(new_photo.id))
+        for file_extension in ['.png', '.jpg']:
+            assert not os.path.exists(path + file_extension)
+            assert not os.path.exists(path + '.p' + file_extension)
+        #   AND quitamos del bucket los archivos subidos de prueba
         S3BucketHandler().remove_file(new_photo.img.name)
-        try:
-            get_file_from_bucket(new_photo.img.name)
-        except Exception:
-            assert True
-        else:
-            assert False
+        S3BucketHandler().remove_file(new_photo.get_img_p_name())
+        S3BucketHandler().remove_file(new_photo.sound.name)
+        check_from_bucket(file_list, check_removed=True)
 
     def test_read_photo_list(self):
         # given
@@ -66,6 +72,8 @@ class CrudPhotoTest(TestCase):
         assert len(received_photos) == 2
         assert received_photos[0]['id'] is not None
         assert received_photos[1]['id'] is not None
+        assert received_photos[1]['sound'] is not None
+        assert received_photos[1]['img_p'] is not None
 
     def test_read_photo(self):
         # given
@@ -97,15 +105,10 @@ class CrudPhotoTest(TestCase):
         # then
         assert resp.status_code == 204
         assert Photo.objects.all().count() == 0
-        try:
-            get_file_from_bucket(photo_to_delete.img.name)
-        except Exception:
-            assert True
-        else:
-            assert False
-
-# class GoogleTest(SplinterTestCase):
-#     def test_search(self):
-#         self.browser.visit('www.google.es')
-#         pass
-
+        photo_to_delete_dict = simplejson.loads(photo_to_delete.content)
+        file_list = [
+            photo_to_delete_dict['img'],
+            photo_to_delete_dict['img_p'],
+            photo_to_delete_dict['sound']
+        ]
+        check_from_bucket(file_list, check_removed=True)

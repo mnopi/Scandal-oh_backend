@@ -153,21 +153,26 @@ class PhotoResource(MultipartResource, ModelResource):
 
     def obj_update(self, bundle, skip_errors=False, **kwargs):
         obj = super(type(self), self).obj_update(bundle)
-        img_original = bundle.obj.img.file.name
+        img_original = bundle.obj.img.path
         ImgResizer().resize(img_original)
-        # subimos al bucket, eliminando la imagen local
+        # subimos archivos al bucket, eliminando los locales
         S3BucketHandler().push_file(img_original, bundle.obj.img.name)
+        S3BucketHandler().push_file(bundle.obj.get_img_p_path(), bundle.obj.get_img_p_name())
+        S3BucketHandler().push_file(bundle.obj.sound.path, bundle.obj.sound.name)
         return obj
 
     def obj_delete(self, bundle, **kwargs):
         super(type(self), self).obj_delete(bundle)
         # eliminamos la imagen del bucket
         S3BucketHandler().remove_file(bundle.obj.img.name)
+        S3BucketHandler().remove_file(bundle.obj.get_img_p_name())
+        S3BucketHandler().remove_file(bundle.obj.sound.name)
 
     def dehydrate(self, bundle):
         bundle.data['comments_count'] = Comment.objects.filter(photo=bundle.obj).count()
         bundle.data['latitude'] = -1 if bundle.data['latitude'] == 0 else bundle.data['latitude']
         bundle.data['longitude'] = -1 if bundle.data['longitude'] == 0 else bundle.data['longitude']
+        bundle.data['img_p'] = bundle.obj.get_img_p_name()
         return bundle
 
 
