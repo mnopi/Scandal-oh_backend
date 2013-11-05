@@ -160,7 +160,8 @@ class PhotoResource(MultipartResource, ModelResource):
         # subimos archivos al bucket, eliminando los locales
         S3BucketHandler.push_file(img_original, bundle.obj.img.name)
         S3BucketHandler.push_file(bundle.obj.get_img_p_path(), bundle.obj.get_img_p_name())
-        S3BucketHandler.push_file(bundle.obj.sound.path, bundle.obj.sound.name)
+        if bundle.obj.sound:
+            S3BucketHandler.push_file(bundle.obj.sound.path, bundle.obj.sound.name)
         # nos aseguramos que dejamos /media limpia
         reset_folder(MEDIA_ROOT)
         return obj

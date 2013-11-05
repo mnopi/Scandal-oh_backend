@@ -4,8 +4,7 @@ import os
 import shutil
 import urllib2
 from django.test.client import Client
-from settings.common import PROJECT_ROOT, BUCKET_URL
-from settings.test import MEDIA_TEST
+from settings.common import PROJECT_ROOT, BUCKET_URL, MEDIA_TEST
 
 
 def saved_only_one_instance_ok(instance_class):

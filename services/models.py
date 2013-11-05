@@ -1,15 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
-import re
 
-from django.contrib.auth.models import User, UserManager, Group
-from django.core import validators
-from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+from django.contrib.auth.models import User, UserManager
 from django.db import models
 from services.utils import delete_file, rename_string
 from settings.common import TEST_MODE
-from django.utils.translation import ugettext_lazy as _
 
 class CustomUser(User):
     class Meta:

@@ -188,3 +188,8 @@ AWS_ACCESS_KEY_ID = 'AKIAJYHVOPSE2533MFRQ'
 AWS_SECRET_ACCESS_KEY = '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'
 BUCKET_URL = 'http://' + BUCKET_NAME + '.s3.amazonaws.com/'
 LOCAL_PATH = '/backup/s3/'
+
+#
+# TEST
+MEDIA_TEST = os.path.join(MEDIA_ROOT, 'test')
+TEST_FIXTURES = os.path.join(PROJECT_ROOT, 'tests', 'fixtures')

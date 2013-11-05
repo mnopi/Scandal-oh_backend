@@ -4,14 +4,15 @@ from django.test import TestCase
 import simplejson
 from services.models import *
 from services.utils import S3BucketHandler
+from settings.common import MEDIA_ROOT
 from settings.test import MEDIA_TEST
 from tests.factories import *
 
 from tests.runner import SplinterTestCase
-from tests.utils import client, API_BASE_URI, TEST_IMGS_PATH, get_file_from_bucket, content_type_ok_ext, reset_media_test_folder, check_from_bucket, TEST_SOUNDS_PATH
+from tests.utils import client, API_BASE_URI, TEST_IMGS_PATH, get_file_from_bucket, content_type_ok_ext, reset_media_test_folder, check_from_bucket, TEST_SOUNDS_PATH, reset_folder
 
 
-def create_photo():
+def create_photo_with_audio():
     # GIVEN
     #   un usuario y una categoría
     CustomUserFactory()
@@ -30,12 +31,29 @@ def create_photo():
             return client.post(API_BASE_URI + 'photo/', data=data)
 
 
+def create_photo_without_audio():
+    # GIVEN
+    #   un usuario y una categoría
+    CustomUserFactory()
+    CategoryFactory()
+    # WHEN
+    #   envío la foto al servidor
+    with open(os.path.join(TEST_IMGS_PATH, 'test_img_portrait.png')) as img:
+        data = {
+            "user": "/api/v1/user/1/",
+            "category": "/api/v1/category/1/",
+            "title": "This is a title bla bla bla",
+            "img": img,
+        }
+        return client.post(API_BASE_URI + 'photo/', data=data)
+
+
 class CrudPhotoTest(TestCase):
     def setUp(self):
-        reset_media_test_folder()
+        reset_folder(MEDIA_ROOT)
 
-    def test_create_photo(self):
-        resp = create_photo()
+    def test_create_photo_with_audio(self):
+        resp = create_photo_with_audio()
         # THEN
         #   respuesta ok y que se haya creado en BD la foto
         assert resp.status_code == 201
@@ -59,6 +77,31 @@ class CrudPhotoTest(TestCase):
         S3BucketHandler.remove_file(new_photo.img.name)
         S3BucketHandler.remove_file(new_photo.get_img_p_name())
         S3BucketHandler.remove_file(new_photo.sound.name)
+        check_from_bucket(file_list, check_removed=True)
+
+    def test_create_photo_without_audio(self):
+        resp = create_photo_without_audio()
+        # THEN
+        #   respuesta ok y que se haya creado en BD la foto
+        assert resp.status_code == 201
+        new_photo = Photo.objects.all()[0]
+        assert new_photo.id is not None
+        file_list = [
+            new_photo.img.name,
+            new_photo.get_img_p_name(),
+        ]
+        #   AND que los archivos se hayan subido correctamente al bucket
+        check_from_bucket(file_list)
+        #   AND que los archivos en servidor local estén eliminados
+        path = os.path.join(MEDIA_TEST, 'photos',
+                            'cat_' + str(new_photo.category.id),
+                            'photo_' + str(new_photo.id))
+        for file_extension in ['.png', '.jpg']:
+            assert not os.path.exists(path + file_extension)
+            assert not os.path.exists(path + '.p' + file_extension)
+            #   AND quitamos del bucket los archivos subidos de prueba
+        S3BucketHandler.remove_file(new_photo.img.name)
+        S3BucketHandler.remove_file(new_photo.get_img_p_name())
         check_from_bucket(file_list, check_removed=True)
 
     def test_read_photo_list(self):
@@ -99,7 +142,7 @@ class CrudPhotoTest(TestCase):
         # given
         #   tenemos que tener una foto creada antes de poder eliminarla y así
         #   comprobar que también quedó borrada del bucket
-        photo_to_delete = create_photo()
+        photo_to_delete = create_photo_with_audio()
         # when
         resp = client.delete(API_BASE_URI + 'photo/1/')
         # then

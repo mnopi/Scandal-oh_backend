@@ -10,8 +10,11 @@ class RegisterTest(TestCase):
     existing_username = 'paco33'
     existing_email = 'manitobueno@example.com'
     another_username = 'capitancock'
+    another_username_invalid = 'capitañooo'
     another_email = 'yupi@yo.com'
-    password = 'mani'
+    another_email_invalid = 'yupi@.com'
+    password = 'manito666'
+    password_invalid = 'mani'
 
     @classmethod
     def setUpClass(cls):
@@ -22,31 +25,67 @@ class RegisterTest(TestCase):
             email=cls.existing_email,
         )
 
+    def __assert_error__(self, data):
+        # WHEN
+        self.resp = client.post(API_BASE_URI + 'user/',
+                                data=simplejson.dumps(data),
+                                content_type='application/json')
+        # THEN
+        assert self.resp.status_code == 200
+        resp_content = simplejson.loads(self.resp.content)
+        assert resp_content['status'] == 'error'
+
     def test_register_ok(self):
-        pass
+        # WHEN
+        data = {
+            'username': self.another_username,
+            'email': self.another_email,
+            'password': self.password,
+        }
+        self.resp = client.post(API_BASE_URI + 'user/',
+                                data=simplejson.dumps(data),
+                                content_type='application/json')
+        # THEN
+        assert self.resp.status_code == 201
+        resp_content = simplejson.loads(self.resp.content)
+        assert resp_content['id'] is not None
 
     def test_register_with_existing_username(self):
-        # WHEN
-        data = simplejson.dumps({
+        data = {
             'username': self.existing_username,
             'email': self.another_email,
             'password': self.password,
-        })
-        resp = client.post(API_BASE_URI + 'user/', data=data, content_type='application/json')
-        # THEN
-        assert resp.status_code == 200
-        resp_content = simplejson.loads(resp.content)
-        assert resp_content['status'] == 'error'
+        }
+        self.__assert_error__(data)
 
     def test_register_with_existing_email(self):
-        # WHEN
-        data = simplejson.dumps({
+        data = {
             'username': self.another_username,
             'email': self.existing_email,
             'password': self.password,
-            })
-        resp = client.post(API_BASE_URI + 'user/', data=data, content_type='application/json')
-        # THEN
-        assert resp.status_code == 200
-        resp_content = simplejson.loads(resp.content)
-        assert resp_content['status'] == 'error'
+        }
+        self.__assert_error__(data)
+
+    def test_register_with_invalid_username(self):
+        data = {
+            'username': self.another_username_invalid,
+            'email': self.another_email,
+            'password': self.password,
+        }
+        self.__assert_error__(data)
+
+    def test_register_with_invalid_email(self):
+        data = {
+            'username': self.another_username,
+            'email': self.another_email_invalid,
+            'password': self.password,
+            }
+        self.__assert_error__(data)
+
+    def test_register_with_invalid_password(self):
+        data = {
+            'username': self.another_username,
+            'email': self.another_email,
+            'password': self.password_invalid,
+            }
+        self.__assert_error__(data)

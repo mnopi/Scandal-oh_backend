@@ -5,9 +5,6 @@ from settings import common
 
 common.TEST_MODE = True
 
-MEDIA_TEST = os.path.join(MEDIA_ROOT, 'test')
-TEST_FIXTURES = os.path.join(PROJECT_ROOT, 'tests', 'fixtures')
-
 # Usaremos sqlite3 como BD para testing
 DATABASES = {
     'default': {
