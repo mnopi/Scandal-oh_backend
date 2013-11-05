@@ -144,9 +144,9 @@ class PhotoResource(MultipartResource, ModelResource):
         }
 
     def obj_create(self, bundle, **kwargs):
-        # dependiendo si la petición llega en formato json puro..
-        if bundle.request.META['CONTENT_TYPE'] == 'application/json':
-            bundle.data = tx_json_to_multipart(bundle.request.body)
+        # # dependiendo si la petición llega en formato json puro..
+        # if bundle.request.META['CONTENT_TYPE'] == 'application/json':
+        #     bundle.data = tx_json_to_multipart(bundle.request.body)
         super(type(self), self).obj_create(bundle)
         # en /media/ borra todos los archivos que comienzen por delete_me
         delete_files(os.path.join(MEDIA_ROOT, 'delete_me*'))
@@ -155,10 +155,8 @@ class PhotoResource(MultipartResource, ModelResource):
     def obj_update(self, bundle, skip_errors=False, **kwargs):
         obj = super(type(self), self).obj_update(bundle)
         img_original = bundle.obj.img.path
-        # comprimimos y redimensionamos la imagen original
-        i = ImgHelper()
-        i.compress(img_original)
-        i.resize(img_original)
+        # comprimimos la imagen original y creamos la copia redimensionada
+        ImgHelper().resize(img_original)
         # subimos archivos al bucket, eliminando los locales
         S3BucketHandler.push_file(img_original, bundle.obj.img.name)
         S3BucketHandler.push_file(bundle.obj.get_img_p_path(), bundle.obj.get_img_p_name())
@@ -169,7 +167,7 @@ class PhotoResource(MultipartResource, ModelResource):
 
     def obj_delete(self, bundle, **kwargs):
         super(type(self), self).obj_delete(bundle)
-        # eliminamos la imagen del bucket
+        # eliminamos del bucket los archivos para la foto
         S3BucketHandler.remove_file(bundle.obj.img.name)
         S3BucketHandler.remove_file(bundle.obj.get_img_p_name())
         S3BucketHandler.remove_file(bundle.obj.sound.name)

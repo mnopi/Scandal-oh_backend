@@ -4,6 +4,7 @@ import os
 PROJECT_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 TEST_MODE = False
+UNIT_TEST_MODE = False
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 

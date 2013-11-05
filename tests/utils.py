@@ -39,6 +39,7 @@ client = Client()
 
 API_BASE_URI = '/api/v1/'
 TEST_IMGS_PATH = os.path.join(PROJECT_ROOT, 'tests', 'fixtures', 'imgs')
+TEST_IMGS_COPIES_PATH = os.path.join(PROJECT_ROOT, 'tests', 'fixtures', 'imgs', 'test_copies')
 TEST_SOUNDS_PATH = os.path.join(PROJECT_ROOT, 'tests', 'fixtures', 'sounds')
 
 

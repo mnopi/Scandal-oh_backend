@@ -36,7 +36,7 @@ class Photo(models.Model):
     def get_photo_path(self, filename):
         if self.pk:
             fileName, fileExtension = os.path.splitext(filename)
-            path = 'photos/cat_%s/photo_%s%s' % (self.category.id, self.id, fileExtension)
+            path = 'photos/cat_%s/photo_%s.jpg' % (self.category.id, self.id)
             if TEST_MODE:
                 return 'test/' + path
             return path

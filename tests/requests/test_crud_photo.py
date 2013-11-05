@@ -18,8 +18,8 @@ def create_photo():
     CategoryFactory()
     # WHEN
     #   envío la foto al servidor
-    with open(os.path.join(TEST_IMGS_PATH, 'test_img_portrait.jpg')) as img:
-        with open(os.path.join(TEST_SOUNDS_PATH, 'European Siren.caf')) as sound:
+    with open(os.path.join(TEST_IMGS_PATH, 'test_img_portrait.png')) as img:
+        with open(os.path.join(TEST_SOUNDS_PATH, 'prueba de sonido.caf')) as sound:
             data = {
                 "user": "/api/v1/user/1/",
                 "category": "/api/v1/category/1/",

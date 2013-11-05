@@ -5,12 +5,12 @@ import logging
 import os
 import re
 from PIL import Image
-from boto.s3.connection import S3Connection
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import simplejson
 import boto
 from boto.s3.key import Key
-from settings.common import *
+from settings import common
+from tests.utils import TEST_IMGS_COPIES_PATH
 
 
 def delete_file(fileField):
@@ -25,11 +25,6 @@ def tx_json_to_multipart(json_data):
     for key, value in data_dic.iteritems():
         if len(value) > 10000:
             img_enc = data_dic[key].strip().decode('base64')
-            # dec = base64.b64decode(data['img'])
-            # fout = open('out.png', "w")
-            # fout.write(dec)
-            # fout.close()
-            # and put in a dict with the rest of json data
             data_dic[key] = InMemoryUploadedFile(
                 StringIO(img_enc),
                 field_name='tempfile',
@@ -38,54 +33,99 @@ def tx_json_to_multipart(json_data):
                 size=len(img_enc),
                 charset='utf-8',
             )
-            pass
     return data_dic
 
 
-def delete_files(path):
+def delete_files(path, exclude=None):
     """
     Elimina todos los archivos dentro del path.
     ej: /path/to/media/delete_me*   ->  eliminará todos los archivos de /media
                                         que comienzen por delete_me
     """
     for filename in glob.glob(path):
-        os.remove(filename)
+        if exclude and not exclude in filename:
+            os.remove(filename)
+        else:
+            os.remove(filename)
+
 
 
 class ImgHelper(object):
     COMPRESSOR = 'JPEG'
-    COMPRESSION_FACTOR = 80
+    COMPRESSION_QUALITY = 80
+    DEFAULT_RESIZED_WIDTH = 480
+    DEFAULT_RESIZED_HEIGHT = 640
 
     def __resize_width__(self):
-        """Redimensiona al ancho deseado"""
+        "Redimensiona al ancho deseado"
         if self.img_width != self.fixed_width:
             wpercent = (self.fixed_width / float(self.img_width))
             hsize = int((float(self.img_height) * float(wpercent)))
-            self.new_img = self.img.resize((self.fixed_width, hsize), Image.ANTIALIAS)
+            self.img_resized = self.img.resize((self.fixed_width, hsize), Image.ANTIALIAS)
 
     def __resize_height__(self):
-        """Redimensiona al alto deseado"""
+        "Redimensiona al alto deseado"
         if self.img_height != self.fixed_height:
             hpercent = (self.fixed_height / float(self.img_height))
             wsize = int((float(self.img_width) * float(hpercent)))
-            self.new_img = self.img.resize((wsize, self.fixed_height), Image.ANTIALIAS)
+            self.img_resized = self.img.resize((wsize, self.fixed_height), Image.ANTIALIAS)
 
-    def resize(self, img_from, img_to=None, **kwargs):
+    def __compress__(self):
+        "Comprime la imagen dada en formato jpg, sobreescribiendo la original"
+        img = Image.open(self.img_from_path)
+        self.img_compressed_path = self.__rename_to_jpg__(self.img_from_path)
+        img.save(self.img_compressed_path, self.COMPRESSOR, quality=self.COMPRESSION_QUALITY)
+
+    def __get_filename__(self, path):
+        return re.sub(r'^.*\/(.*\..*)$', r'\1', path)
+
+    def __rename_to_jpg__(self, path):
+        """
+        En modo test: devuelve renombrado a la carpeta para los tests
+        Sin modo test: renombrado a la misma ruta origen
+        """
+        if common.UNIT_TEST_MODE:
+            filename = re.sub(r'^.*\/(.*\.).*$', r'\1jpg', path)
+            return os.path.join(TEST_IMGS_COPIES_PATH, filename)
+        else:
+            if not self.__is_jpg__(path):
+                return re.sub(r'^(.*\.).*$', r'\1jpg', path)
+            return path
+
+    def __rename_to_p_jpg__(self, path):
+        if common.UNIT_TEST_MODE:
+            filename = re.sub(r'^.*\/(.*)\..*$', r'\1.p.jpg', path)
+            return os.path.join(TEST_IMGS_COPIES_PATH, filename)
+        else:
+            return re.sub(r'^(.*)\..*$', r'\1.p.jpg', path)
+
+    def __is_jpg__(self, path):
+        return re.sub(r'^.*\.(.*)$', r'\1', path) == 'jpg'
+
+    def resize(self, img_from, **kwargs):
         """
         Redimensionador de imagen. Se construye con un ancho y/o alto dados.
 
-        Ejemplos de uso:
-            ImgResizer().resize('/path/to/img_from.png', '/path/to/img_to.png')
+        **kwargs:
+            fixed_width/heigh: redimensiona en píxeles a ancho/alto dado, e.g. fixed_width=1024
 
-        En este caso se sobreescribirá, con un ancho dado de 1024px
-            ImgResizer().resize('/path/to/img_from.png', fixed_width=1024)
+        Ejemplos:
+            ImgResizer().resize('/path/to/img_from.png')
+
+            En este caso se guardará en un .p.png, con un ancho dado de 1024px
+                ImgResizer().resize('/path/to/img_from.png', fixed_width=1024)
         """
-        self.fixed_width = kwargs['fixed_width'] if 'fixed_width' in kwargs else 480
-        self.fixed_height = kwargs['fixed_height'] if 'fixed_height' in kwargs else 640
-        self.img_from = img_from
-        # si no se da una imagen destino se crea igual que la origen renombrada a .p
-        self.img_to = img_to if img_to is not None else rename_string(self.img_from)
-        self.img = Image.open(img_from)
+        self.fixed_width = kwargs['fixed_width'] if 'fixed_width' in kwargs \
+            else self.DEFAULT_RESIZED_WIDTH
+        self.fixed_height = kwargs['fixed_height'] if 'fixed_height' in kwargs \
+            else self.DEFAULT_RESIZED_HEIGHT
+        self.img_from_path = img_from
+
+        self.__compress__()
+
+        # se crea redimensionada renombrada a .p
+        self.img_resized_path = self.__rename_to_p_jpg__(self.img_compressed_path)
+        self.img = Image.open(self.img_compressed_path)
         self.img_width = self.img.size[0]
         self.img_height = self.img.size[1]
 
@@ -94,38 +134,45 @@ class ImgHelper(object):
         else:
             self.__resize_height__()
 
-        if hasattr(self, 'new_img'):
-            self.new_img.save(self.img_to)
+        # si se ha redimensionado se guarda la redimensionada, si no, entonces
+        # se guarda la misma que la comprimida pero con el .p
+        if hasattr(self, 'img_resized'):
+            self.img_resized.save(self.img_resized_path)
+        else:
+            self.img.save(self.img_resized_path)
 
-    def compress(self, img_original_path):
-        "Comprime la imagen dada, sobreescribiéndola"
-        img = Image.open(img_original_path)
-        img.save(img_original_path, self.COMPRESSOR, quality=self.COMPRESSION_FACTOR)
+        # si hay algun archivo que no esté dentro de la lista se elimina
+        if common.UNIT_TEST_MODE:
+            filename = self.__get_filename__(self.img_from_path)
+            path = os.path.join(TEST_IMGS_COPIES_PATH, filename)
+            os.remove(path)
 
 
 class S3BucketHandler:
     # set boto lib debug to critical
     logging.getLogger('boto').setLevel(logging.CRITICAL)
     # connect to the bucket
-    conn = boto.connect_s3(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
-    bucket = conn.get_bucket(BUCKET_NAME)
+    conn = boto.connect_s3(common.AWS_ACCESS_KEY_ID, common.AWS_SECRET_ACCESS_KEY)
+    bucket = conn.get_bucket(common.BUCKET_NAME)
 
     @classmethod
-    def push_file(cls, fn, file_id):
+    def push_file(cls, fn, file_id, from_file_object=False):
         """
-        fn: archivo a subir, e.g. /var/www/data/paquillo.png
         file_id: para identificar el archivo dentro del bucket
         """
         # create a key to keep track of our file in the storage
         k = Key(cls.bucket)
         k.key = file_id
-        k.set_contents_from_filename(fn)
+        if from_file_object:
+            k.set_contents_from_file(fn)
+        else:
+            k.set_contents_from_filename(fn)
+            # remove the file from the web server
+            os.remove(fn)
         # we need to make it public so it can be accessed publicly
         # using a URL like http://s3.amazonaws.com/bucket_name/key
         # http://scandaloh.s3.amazonaws.com/prueba.png
         k.make_public()
-        # remove the file from the web server
-        os.remove(fn)
 
     @classmethod
     def remove_file(cls, file_id):
@@ -144,8 +191,12 @@ class S3BucketHandler:
         for l in bucket_list:
             keyString = str(l.key)
             # check if file exists locally, if not: download it
-            if not os.path.exists(LOCAL_PATH + keyString):
-                l.get_contents_to_filename(LOCAL_PATH + keyString)
+            if not os.path.exists(common.LOCAL_PATH + keyString):
+                l.get_contents_to_filename(common.LOCAL_PATH + keyString)
+
+
+class AudioHelper:
+    pass
 
 
 def rename_string(filename):

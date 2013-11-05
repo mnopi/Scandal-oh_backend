@@ -1,9 +1,10 @@
 import shutil
 from django.contrib.auth.models import Group
-from django.test import LiveServerTestCase
+from django.test import LiveServerTestCase, TestCase
 from django_nose import NoseTestSuiteRunner
 from splinter import Browser
 from settings.test import MEDIA_TEST
+from settings import common
 from tests.utils import reset_media_test_folder
 
 
@@ -24,7 +25,18 @@ class SplinterTestCase(LiveServerTestCase):
         super(SplinterTestCase, cls).tearDownClass()
 
 
-# class MyTestRunner(DjangoTestSuiteRunner):
+class UnitTestCase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        common.UNIT_TEST_MODE = True
+        super(UnitTestCase, cls).setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        common.UNIT_TEST_MODE = False
+        super(UnitTestCase, cls).tearDownClass()
+
+
 class MyTestRunner(NoseTestSuiteRunner):
     def setup_databases(self, **kwargs):
         o = super(MyTestRunner, self).setup_databases()
