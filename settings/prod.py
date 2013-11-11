@@ -11,7 +11,7 @@ SECRET_KEY = os.environ['SECRET_KEY']
 DATABASES = {
     "default": {
     "ENGINE": "django.db.backends.mysql",
-    "NAME": "labelee",
+    "NAME": "scandaloh",
     "USER": "root",
     "PASSWORD": os.environ['DB_PASSWORD'],
     "HOST": "",
