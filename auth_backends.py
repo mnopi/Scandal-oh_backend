@@ -1,17 +1,20 @@
-from django.conf import settings
+# -*- coding: utf-8 -*-
+
 from django.contrib.auth.backends import ModelBackend
 from django.core.exceptions import ImproperlyConfigured
 from services.models import CustomUser
-from django.db.models import get_model
 
 class CustomUserModelBackend(ModelBackend):
     """
     http://scottbarnham.com/blog/2008/08/21/extending-the-django-user-model-with-inheritance/
     """
-    def authenticate(self, username=None, password=None):
+    def authenticate(self, username=None, password=None, from_social_network=False):
         try:
             user = self.user_class.objects.get(username=username)
-            if user.check_password(password):
+            # todo: a securizar de manera que desde fb no sólamente haya que meter username..
+            if from_social_network:
+                return user
+            elif user.check_password(password):
                 return user
         except self.user_class.DoesNotExist:
             return None

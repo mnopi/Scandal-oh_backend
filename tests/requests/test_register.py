@@ -2,39 +2,23 @@
 
 from django.test import TestCase
 import simplejson
+from settings.common import API_BASE_URI
 from tests.factories import CustomUserFactory, FacebookUserFactory
-from tests.utils import client, API_BASE_URI
+from tests.utils import client
+from tests.fixtures.input_data import *
 
 
 class RegisterTest(TestCase):
-    username = {
-        'existing': 'paco33',
-        'existing_facebook': 'paco33_facebook',
-        'another': 'capitancock',
-        'another_facebook': 'capitancock_facebook',
-        'invalid': 'capitañooo',
-    }
-    email = {
-        'existing': 'manitobueno@example.com',
-        'existing_facebook': 'manitobueno_facebook@example.com',
-        'another': 'yupi@yo.com',
-        'another_facebook': 'yupi_facebook@yo.com',
-        'invalid': 'yupi@.com',
-    }
-    password = 'manito666'
-    password_invalid = 'mani'
-
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         # GIVEN
-        cls.existing_user = CustomUserFactory(
-            username=cls.username['existing'],
-            email=cls.email['existing'],
-            password=cls.password,
+        self.existing_user = CustomUserFactory(
+            username=username['existing'],
+            email=email['existing'],
+            password=password,
         )
-        cls.existing_facebook_user = FacebookUserFactory(
-            username=cls.username['existing_facebook'],
-            email=cls.email['existing_facebook'],
+        self.existing_facebook_user = FacebookUserFactory(
+            username=username['existing_facebook'],
+            email=email['existing_facebook'],
         )
 
     def __assert_ok__(self):
@@ -46,6 +30,7 @@ class RegisterTest(TestCase):
         assert self.resp.status_code == 201
         self.resp_content = simplejson.loads(self.resp.content)
         assert self.resp_content['id'] is not None
+        assert self.resp_content['status'] == 'ok'
 
     def __assert_error__(self):
         # WHEN
@@ -63,16 +48,16 @@ class RegisterTest(TestCase):
 
     def test_register_ok(self):
         self.data = {
-            'username': self.username['another'],
-            'email': self.email['another'],
-            'password': self.password,
+            'username': username['another'],
+            'email': email['another'],
+            'password': password,
         }
         self.__assert_ok__()
 
     def test_register_ok_with_facebook(self):
         self.data = {
-            'username': self.username['another_facebook'],
-            'email': self.email['another_facebook'],
+            'username': username['another_facebook'],
+            'email': email['another_facebook'],
             'social_network': 1,
         }
         self.__assert_ok__()
@@ -84,40 +69,40 @@ class RegisterTest(TestCase):
 
     def test_register_with_existing_username(self):
         self.data = {
-            'username': self.username['existing'],
-            'email': self.email['another'],
-            'password': self.password,
+            'username': username['existing'],
+            'email': email['another'],
+            'password': password,
         }
         self.__assert_error__()
 
     def test_register_with_existing_email(self):
         self.data = {
-            'username': self.username['another'],
-            'email': self.email['existing'],
-            'password': self.password,
+            'username': username['another'],
+            'email': email['existing'],
+            'password': password,
         }
         self.__assert_error__()
 
     def test_register_with_invalid_username(self):
         self.data = {
-            'username': self.username['invalid'],
-            'email': self.email['another'],
-            'password': self.password,
+            'username': username['invalid'],
+            'email': email['another'],
+            'password': password,
         }
         self.__assert_error__()
 
     def test_register_with_invalid_email(self):
         self.data = {
-            'username': self.username['another'],
-            'email': self.email['invalid'],
-            'password': self.password,
+            'username': username['another'],
+            'email': email['invalid'],
+            'password': password,
         }
         self.__assert_error__()
 
     def test_register_with_invalid_password(self):
         self.data = {
-            'username': self.username['another'],
-            'email': self.email['another'],
-            'password': self.password_invalid,
+            'username': username['another'],
+            'email': email['another'],
+            'password': password_invalid,
         }
         self.__assert_error__()

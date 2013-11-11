@@ -4,10 +4,11 @@ from django.test import TestCase
 import simplejson
 from services.models import *
 from services.utils import S3BucketHandler
+from settings.common import TEST_IMGS_PATH, API_BASE_URI
 from settings.test import MEDIA_TEST
 from tests.factories import *
 
-from tests.utils import client, API_BASE_URI, TEST_IMGS_PATH, get_file_from_bucket, content_type_ok_ext, reset_media_test_folder, check_from_bucket, TEST_SOUNDS_PATH, reset_folder
+from tests.utils import client, check_from_bucket, reset_folder
 
 
 def create_photo_with_sound():
@@ -136,7 +137,24 @@ class CrudPhotoTest(TestCase):
         assert resp.status_code == 200
         assert simplejson.loads(resp.content)['title'] == title_edited
 
-    def test_delete_photo(self):
+    def test_delete_photo_without_sound(self):
+        # given
+        #   tenemos que tener una foto creada antes de poder eliminarla y así
+        #   comprobar que también quedó borrada del bucket
+        photo_to_delete = create_photo_without_sound()
+        # when
+        resp = client.delete(API_BASE_URI + 'photo/1/')
+        # then
+        assert resp.status_code == 204
+        assert Photo.objects.all().count() == 0
+        photo_to_delete_dict = simplejson.loads(photo_to_delete.content)
+        file_list = [
+            photo_to_delete_dict['img'],
+            photo_to_delete_dict['img_p'],
+        ]
+        check_from_bucket(file_list, check_removed=True)
+
+    def test_delete_photo_with_sound(self):
         # given
         #   tenemos que tener una foto creada antes de poder eliminarla y así
         #   comprobar que también quedó borrada del bucket

@@ -3,7 +3,7 @@ import os
 
 from django.contrib.auth.models import User, UserManager
 from django.db import models
-from services.utils import delete_file, rename_to_p
+from services.utils import delete_file, rename_to_p, S3BucketHandler
 from settings.common import TEST_MODE
 
 class CustomUser(User):
@@ -76,8 +76,13 @@ class Photo(models.Model):
     #         resize_img_width(self.img.path, 350)
 
     def delete(self, *args, **kwargs):
-        if self.img:
-            delete_file(self.img)
+        # if self.img:
+        #     delete_file(self.img)
+        # eliminamos del bucket los archivos para la foto
+        S3BucketHandler.remove_file(self.img.name)
+        S3BucketHandler.remove_file(self.get_img_p_name())
+        if self.sound:
+            S3BucketHandler.remove_file(self.sound.name)
         super(Photo, self).delete(*args, **kwargs)
 
     def get_img_p_name(self):

@@ -54,7 +54,10 @@ class CustomUserResource(ErrorResponseMixin, ModelResource):
     def obj_create(self, bundle, **kwargs):
         if 'social_network' in bundle.data:
             bundle.data['password'] = '123456'
-        return super(CustomUserResource, self).obj_create(bundle, **kwargs)
+        bundle_created = super(CustomUserResource, self).obj_create(bundle, **kwargs)
+        resp = self.full_dehydrate(bundle_created)
+        resp.data['status'] = 'ok'
+        return resp
 
     def get_dehydrated_user(self, user_obj, request):
         """
@@ -75,12 +78,17 @@ class CustomUserResource(ErrorResponseMixin, ModelResource):
     def login_user(self, request, **kwargs):
         if request.method == 'POST':
             posted_data = simplejson.loads(request.body)
-            username = email = posted_data['username_email']
-            password = posted_data['password']
+            if 'social_network' in posted_data:
+                username = posted_data['username']
+                email = posted_data['email']
+                user = authenticate(username=username, from_social_network=True)
+            else:
+                username = email = posted_data['username_email']
+                password = posted_data['password']
+                user = authenticate(username=username, password=password)
             resp_error = {'status': 'error',}
             resp_ok = {'status': 'ok',}
             resp = None
-            user = authenticate(username=username, password=password)
             if user is None:
                 # si falla con el nombre de usuario se comprueba con el email
                 users_with_that_username = CustomUser.objects.filter(username=username)
@@ -113,15 +121,15 @@ class CustomUserResource(ErrorResponseMixin, ModelResource):
                 resp = resp_ok
 
             # si no están bien los campos del formulario devolverá un error
-            form = CustomUserLoginForm({'username_email': posted_data['username_email'], 'password': posted_data['password']})
-            if not form.is_valid():
-                resp_error['reason'] = 'invalid form data'
-                resp_error['reason_details'] = form.errors
-                resp_error['reason_code'] = 3
-                resp = resp_error
+            if not 'social_network' in posted_data:
+                form = CustomUserLoginForm({'username_email': posted_data['username_email'], 'password': posted_data['password']})
+                if not form.is_valid():
+                    resp_error['reason'] = 'invalid form data'
+                    resp_error['reason_details'] = form.errors
+                    resp_error['reason_code'] = 3
+                    resp = resp_error
 
             return HttpResponse(simplejson.dumps(resp), mimetype="application/json")
-
 
 
 class PhotoResource(MultipartResource, ModelResource):
@@ -152,7 +160,6 @@ class PhotoResource(MultipartResource, ModelResource):
         return self.obj_update(bundle)
 
     def obj_update(self, bundle, skip_errors=False, **kwargs):
-        # todo: al editar la foto, no tener que volver a subir los archivos al bucket si son los mismos
         obj = super(type(self), self).obj_update(bundle)
         # subimos las imagenes al bucket
         if 'img' in bundle.data:
@@ -176,10 +183,6 @@ class PhotoResource(MultipartResource, ModelResource):
 
     def obj_delete(self, bundle, **kwargs):
         super(type(self), self).obj_delete(bundle)
-        # eliminamos del bucket los archivos para la foto
-        S3BucketHandler.remove_file(bundle.obj.img.name)
-        S3BucketHandler.remove_file(bundle.obj.get_img_p_name())
-        S3BucketHandler.remove_file(bundle.obj.sound.name)
 
     def dehydrate(self, bundle):
         bundle.data['comments_count'] = Comment.objects.filter(photo=bundle.obj).count()

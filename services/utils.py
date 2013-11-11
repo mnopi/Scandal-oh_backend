@@ -4,15 +4,13 @@ import glob
 import logging
 import os
 import re
-import subprocess
 from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from pydub import AudioSegment
 import simplejson
 import boto
 from boto.s3.key import Key
 from settings import common
-from tests.utils import TEST_IMGS_COPIES_PATH
+from settings.common import TEST_IMGS_COPIES_PATH
 
 
 def delete_file(fileField):

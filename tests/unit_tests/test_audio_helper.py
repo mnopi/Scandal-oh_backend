@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 from services.audio_helper import AudioHelper
+from settings.common import TEST_SOUNDS_PATH, TEST_SOUNDS_COPIES_PATH
 from tests.runner import UnitTestCase
 from tests.utils import *
 

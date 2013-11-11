@@ -2,10 +2,10 @@
 from django.test import TestCase
 import simplejson
 from services.models import *
+from settings.common import API_BASE_URI
 from tests.factories import *
 
-from tests.runner import SplinterTestCase
-from tests.utils import client, API_BASE_URI
+from tests.utils import client
 
 
 class CrudCategoryTest(TestCase):

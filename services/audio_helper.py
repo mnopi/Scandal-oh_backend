@@ -5,11 +5,11 @@ import os
 import subprocess
 from services.utils import rename_extension, change_directory, get_extension
 from settings import common
-from tests.utils import TEST_SOUNDS_COPIES_PATH
+from settings.common import TEST_SOUNDS_COPIES_PATH
 
 
 class AudioHelper:
-    DEFAULT_CONVERSION_FORMAT = '3gp'
+    DEFAULT_CONVERSION_FORMAT = 'mp3'
 
     @classmethod
     def convert(cls, file_from, file_to=None, fmt=None):

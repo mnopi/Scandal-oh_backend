@@ -4,6 +4,7 @@ import os
 import shutil
 import urllib2
 from django.test.client import Client
+from services.audio_helper import AudioHelper
 from settings.common import PROJECT_ROOT, BUCKET_URL, MEDIA_TEST
 
 
@@ -36,13 +37,6 @@ def content_type_ok_ext(resp, content_type):
 # client = TestApiClient()
 client = Client()
 
-API_BASE_URI = '/api/v1/'
-TEST_IMGS_PATH = os.path.join(PROJECT_ROOT, 'tests', 'fixtures', 'imgs')
-TEST_IMGS_COPIES_PATH = os.path.join(TEST_IMGS_PATH, 'test_copies')
-TEST_SOUNDS_PATH = os.path.join(PROJECT_ROOT, 'tests', 'fixtures', 'sounds')
-TEST_SOUNDS_COPIES_PATH = os.path.join(TEST_SOUNDS_PATH, 'test_copies')
-
-
 def get_file_from_bucket(file_id):
     return urllib2.urlopen(BUCKET_URL + file_id)
 
@@ -61,8 +55,8 @@ def check_from_bucket(file_id_list, check_removed=False):
             resp = get_file_from_bucket(file_id)
             if '.png' in file_id or '.jpg' in file_id:
                 assert content_type_ok_ext(resp, 'image/')
-            elif '.caf' in file_id:
-                assert content_type_ok_ext(resp, 'application/octet-stream')
+            elif '.mp3' in file_id:
+                assert content_type_ok_ext(resp, 'audio/mpeg')
             ok_received_files += 1
         except Exception as ex:
             failed_received_files += 1

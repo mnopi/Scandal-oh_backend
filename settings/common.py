@@ -191,5 +191,10 @@ LOCAL_PATH = '/backup/s3/'
 
 #
 # TEST
+API_BASE_URI = '/api/v1/'
 MEDIA_TEST = os.path.join(MEDIA_ROOT, 'test')
 TEST_FIXTURES = os.path.join(PROJECT_ROOT, 'tests', 'fixtures')
+TEST_IMGS_PATH = os.path.join(PROJECT_ROOT, 'tests', 'fixtures', 'imgs')
+TEST_IMGS_COPIES_PATH = os.path.join(TEST_IMGS_PATH, 'test_copies')
+TEST_SOUNDS_PATH = os.path.join(PROJECT_ROOT, 'tests', 'fixtures', 'sounds')
+TEST_SOUNDS_COPIES_PATH = os.path.join(TEST_SOUNDS_PATH, 'test_copies')
