@@ -3,7 +3,7 @@
 from common import *
 
 #     Estas aplicaciones solo se usaran en desarrollo..
-INSTALLED_APPS += ('south', 'sandbox',)
+INSTALLED_APPS += ('south')
 
 
 ## DEBUG =
