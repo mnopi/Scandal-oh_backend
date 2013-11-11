@@ -1,22 +1,15 @@
 # -*- coding: utf-8 -*-
-import glob
-import json
-import re
-import urlparse
 from django.conf.urls import url
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.forms import AuthenticationForm
-from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
-from django.views.decorators.http import require_http_methods
 import simplejson
 from tastypie import fields
-from tastypie.authorization import DjangoAuthorization
 from tastypie.constants import ALL, ALL_WITH_RELATIONS
 
 from tastypie.resources import ModelResource
 from tastypie.validation import FormValidation
 from services.api.resource_authorization import ResourceAuthorization
+from services.audio_helper import AudioHelper
 from services.forms import CustomUserRegisterForm, CustomUserLoginForm
 from services.models import *
 from services.utils import *
@@ -46,7 +39,6 @@ class ErrorResponseMixin(object):
         return super(ErrorResponseMixin, self).error_response(request, full_errors, response_class=HttpResponse)
 
 
-
 class CustomUserResource(ErrorResponseMixin, ModelResource):
     class Meta:
         resource_name = 'user'
@@ -59,12 +51,10 @@ class CustomUserResource(ErrorResponseMixin, ModelResource):
         #     'username': ALL,
         #     }
 
-    def prepend_urls(self):
-        return [
-            url(r"^(?P<resource_name>%s)/login/$" % (self._meta.resource_name),
-                self.wrap_view('login_user'),
-                name="api_login_user"),
-        ]
+    def obj_create(self, bundle, **kwargs):
+        if 'social_network' in bundle.data:
+            bundle.data['password'] = '123456'
+        return super(CustomUserResource, self).obj_create(bundle, **kwargs)
 
     def get_dehydrated_user(self, user_obj, request):
         """
@@ -73,6 +63,14 @@ class CustomUserResource(ErrorResponseMixin, ModelResource):
         r = CustomUserResource()
         bundle = r.build_bundle(obj=user_obj, request=request)
         return r.full_dehydrate(bundle).data
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<resource_name>%s)/login/$" % (self._meta.resource_name),
+                self.wrap_view('login_user'),
+                name="api_login_user"
+            ),
+        ]
 
     def login_user(self, request, **kwargs):
         if request.method == 'POST':
@@ -125,6 +123,7 @@ class CustomUserResource(ErrorResponseMixin, ModelResource):
             return HttpResponse(simplejson.dumps(resp), mimetype="application/json")
 
 
+
 class PhotoResource(MultipartResource, ModelResource):
     user = fields.ToOneField(CustomUserResource, 'user')
     category = fields.ToOneField('services.api.resources.CategoryResource', 'category')
@@ -153,15 +152,24 @@ class PhotoResource(MultipartResource, ModelResource):
         return self.obj_update(bundle)
 
     def obj_update(self, bundle, skip_errors=False, **kwargs):
+        # todo: al editar la foto, no tener que volver a subir los archivos al bucket si son los mismos
         obj = super(type(self), self).obj_update(bundle)
-        img_original = bundle.obj.img.path
-        # comprimimos la imagen original y creamos la copia redimensionada
-        ImgHelper().resize(img_original)
-        # subimos archivos al bucket, eliminando los locales
-        S3BucketHandler.push_file(img_original, bundle.obj.img.name)
-        S3BucketHandler.push_file(bundle.obj.get_img_p_path(), bundle.obj.get_img_p_name())
-        if bundle.obj.sound:
-            S3BucketHandler.push_file(bundle.obj.sound.path, bundle.obj.sound.name)
+        # subimos las imagenes al bucket
+        if 'img' in bundle.data:
+            img_original = bundle.obj.img.path
+            # comprimimos la imagen original y creamos la copia redimensionada
+            img_resized = ImgHelper().resize(img_original)
+            # subimos archivos al bucket, eliminando los locales
+            S3BucketHandler.push_file(img_original, bundle.obj.img.name)
+            S3BucketHandler.push_file(img_resized, bundle.obj.get_img_p_name())
+        # subimos el audio convertido al bucket
+        if 'sound' in bundle.data:
+            audio_converted = AudioHelper.convert(bundle.obj.sound.path)
+            ext = get_extension(audio_converted)
+            file_id = rename_extension(bundle.obj.sound.name, ext)
+            bundle.obj.sound.name = file_id
+            bundle.obj.save()
+            S3BucketHandler.push_file(audio_converted, file_id)
         # nos aseguramos que dejamos /media limpia
         reset_folder(MEDIA_ROOT)
         return obj

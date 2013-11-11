@@ -38,8 +38,9 @@ client = Client()
 
 API_BASE_URI = '/api/v1/'
 TEST_IMGS_PATH = os.path.join(PROJECT_ROOT, 'tests', 'fixtures', 'imgs')
-TEST_IMGS_COPIES_PATH = os.path.join(PROJECT_ROOT, 'tests', 'fixtures', 'imgs', 'test_copies')
+TEST_IMGS_COPIES_PATH = os.path.join(TEST_IMGS_PATH, 'test_copies')
 TEST_SOUNDS_PATH = os.path.join(PROJECT_ROOT, 'tests', 'fixtures', 'sounds')
+TEST_SOUNDS_COPIES_PATH = os.path.join(TEST_SOUNDS_PATH, 'test_copies')
 
 
 def get_file_from_bucket(file_id):

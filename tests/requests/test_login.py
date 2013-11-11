@@ -114,23 +114,6 @@ class LoginTest(TestCase):
         assert resp_content['reason_code'] == 1
 
 
-#
-# VALIDATION
-#
-def login_form_validation(username, password):
-    # WHEN
-    data = simplejson.dumps({
-        'username_email': username,
-        'password': password,
-        })
-    resp = client.post(API_BASE_URI + 'user/login/', data=data, content_type='application/json')
-    # THEN
-    assert resp.status_code == 200
-    resp_content = simplejson.loads(resp.content)
-    assert resp_content['status'] == 'error'
-    assert resp_content['reason_code'] == 3
-
-
 class LoginFormValidationTest(TestCase):
     """
         Prueba con campos mal escritos en formulario de login.
@@ -139,17 +122,31 @@ class LoginFormValidationTest(TestCase):
         username_email FAIL, password ok
         username_email FAIL, password FAIL
     """
+
+    def __assert_invalid_form__(self, username, password):
+        # WHEN
+        data = simplejson.dumps({
+            'username_email': username,
+            'password': password,
+            })
+        resp = client.post(API_BASE_URI + 'user/login/', data=data, content_type='application/json')
+        # THEN
+        assert resp.status_code == 200
+        resp_content = simplejson.loads(resp.content)
+        assert resp_content['status'] == 'error'
+        assert resp_content['reason_code'] == 3
+
     def test_with_valid_usernames_emails_and_invalid_passwords(self):
         for u in usernames_emails['valids']:
             for p in passwords['invalids']:
-                login_form_validation(u, p)
+                self.__assert_invalid_form__(u, p)
 
     def test_with_invalid_usernames_emails_and_valid_passwords(self):
         for u in usernames_emails['invalids']:
             for p in passwords['valids']:
-                login_form_validation(u, p)
+                self.__assert_invalid_form__(u, p)
 
     def test_with_invalid_usernames_emails_and_invalid_passwords(self):
         for u in usernames_emails['invalids']:
             for p in passwords['invalids']:
-                login_form_validation(u, p)
+                self.__assert_invalid_form__(u, p)

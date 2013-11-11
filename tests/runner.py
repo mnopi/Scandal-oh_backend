@@ -1,11 +1,10 @@
-import shutil
 from django.contrib.auth.models import Group
 from django.test import LiveServerTestCase, TestCase
 from django_nose import NoseTestSuiteRunner
 from splinter import Browser
-from settings.test import MEDIA_TEST
+from settings.common import MEDIA_TEST
 from settings import common
-from tests.utils import reset_media_test_folder
+from tests.utils import reset_folder
 
 
 def init_database():
@@ -45,8 +44,8 @@ class MyTestRunner(NoseTestSuiteRunner):
 
     def setup_test_environment(self, **kwargs):
         super(MyTestRunner, self).setup_test_environment()
-        reset_media_test_folder()
+        reset_folder(MEDIA_TEST)
 
     def teardown_test_environment(self):
         super(MyTestRunner, self).teardown_test_environment()
-        shutil.rmtree(MEDIA_TEST)
+        reset_folder(MEDIA_TEST)

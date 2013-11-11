@@ -4,8 +4,10 @@ import glob
 import logging
 import os
 import re
+import subprocess
 from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from pydub import AudioSegment
 import simplejson
 import boto
 from boto.s3.key import Key
@@ -147,6 +149,8 @@ class ImgHelper(object):
             path = os.path.join(TEST_IMGS_COPIES_PATH, filename)
             os.remove(path)
 
+        return self.img_resized_path
+
 
 class S3BucketHandler:
     # set boto lib debug to critical
@@ -195,9 +199,30 @@ class S3BucketHandler:
                 l.get_contents_to_filename(common.LOCAL_PATH + keyString)
 
 
-class AudioHelper:
-    pass
 
 
-def rename_string(filename):
+#
+# Operaciones cadenas para archivos
+#
+def change_directory(path_to_filename, path_to_desired_dir):
+    """
+    Dada una cadena con el path abs de un archivo, se cambia para que este archivo
+    apunte al directorio abs deseado
+
+    e.g. /path/to/file1.jpg -> /another/path/to/file1.jpg
+    """
+    filename = re.sub(r'^.*\/(.*\..*)$', r'\1', path_to_filename)
+    return os.path.join(path_to_desired_dir, filename)
+
+
+def rename_extension(filename, ext):
+    return re.sub(r'^(.*)\..*$', r'\1.' + ext, filename)
+
+
+def get_extension(filename):
+    return re.sub(r'^.*\.(.*)$', r'\1', filename)
+
+
+def rename_to_p(filename):
+    "e.g. foto_1.jpg -> foto_1.p.jpg"
     return re.sub(r'(?:_a)?\.([^.]*)$', r'.p.\1', filename)

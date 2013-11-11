@@ -9,19 +9,31 @@ from tests.utils import client, API_BASE_URI
 
 
 class CrudUserTest(TestCase):
-    def test_create_user(self):
-        # given
-        # when
-        data = simplejson.dumps({
-            "username": "paco33",
-            "password": "123456",
-            "email": "tito@lalala.com"
-        })
-        resp = client.post(API_BASE_URI + 'user/', data=data, content_type='application/json')
+    def __assert_created_ok__(self, data):
+        resp = client.post(API_BASE_URI + 'user/', data=simplejson.dumps(data),
+                           content_type='application/json')
         # then
         assert resp.status_code == 201
         new_user = CustomUser.objects.all().order_by('id').reverse()[0]
         assert new_user.id is not None
+
+    def test_create_user_(self):
+        # when
+        data = {
+            "username": "paco33",
+            "password": "123456",
+            "email": "tito@lalala.com"
+        }
+        self.__assert_created_ok__(data)
+
+    def test_create_user_from_social_network(self):
+        # when
+        data = {
+            "username": "paco33",
+            "email": "tito@lalala.com",
+            "social_network": 1,
+        }
+        self.__assert_created_ok__(data)
 
     def test_read_user_list(self):
         # given

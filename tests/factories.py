@@ -13,6 +13,13 @@ class CustomUserFactory(DjangoModelFactory):
     password = '1234'
 
 
+class FacebookUserFactory(DjangoModelFactory):
+    FACTORY_FOR = models.CustomUser
+
+    username = factory.Sequence(lambda n: 'facebook_user_%s' % n)
+    social_network = 1
+
+
 class CategoryFactory(DjangoModelFactory):
     FACTORY_FOR = models.Category
 
@@ -26,7 +33,7 @@ class PhotoFactory(DjangoModelFactory):
     user = factory.SubFactory(CustomUserFactory)
     category = factory.SubFactory(CategoryFactory)
     img = factory.django.ImageField(color='green')
-    sound = factory.django.FileField(filename=os.path.join(TEST_SOUNDS_PATH, 'European Siren.caf'))
+    sound = factory.django.FileField(filename=os.path.join(TEST_SOUNDS_PATH, 'prueba de sonido.3gp'))
 
 
 class CommentFactory(DjangoModelFactory):

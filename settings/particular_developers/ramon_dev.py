@@ -20,3 +20,8 @@ DATABASES = {
     "PORT": "",
     }
 }
+
+#
+# PYDUB
+import pydub
+pydub.AudioSegment.ffmpeg = "/usr/local/bin/ffmpeg"

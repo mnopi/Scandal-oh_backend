@@ -3,10 +3,12 @@ import os
 
 from django.contrib.auth.models import User, UserManager
 from django.db import models
-from services.utils import delete_file, rename_string
+from services.utils import delete_file, rename_to_p
 from settings.common import TEST_MODE
 
 class CustomUser(User):
+    social_network = models.PositiveIntegerField(default=0, blank=True)
+
     class Meta:
         verbose_name = 'Custom user'
         verbose_name_plural = 'Custom users'
@@ -14,6 +16,10 @@ class CustomUser(User):
     objects = UserManager()
 
     def save(self, *args, **kwargs):
+        # if self.social_network:
+        #
+        # else:
+        # seteo la contraseña en BD a partir de la dada por el usuario
         if type(self) is CustomUser and not self.pk:
             self.set_password(self.password)
         super(CustomUser, self).save(*args, **kwargs)
@@ -75,10 +81,10 @@ class Photo(models.Model):
         super(Photo, self).delete(*args, **kwargs)
 
     def get_img_p_name(self):
-        return rename_string(self.img.name)
+        return rename_to_p(self.img.name)
 
     def get_img_p_path(self):
-        return rename_string(self.img.path)
+        return rename_to_p(self.img.path)
 
 
 class Comment(models.Model):
