@@ -159,8 +159,9 @@ class PhotoResource(MultipartResource, ModelResource):
         }
 
     def obj_create(self, bundle, **kwargs):
+        Logger.info('Entra en obj_create')
         try:
-            #raise Exception('bla bla bla')
+          #   raise Exception('bla bla bla')
             # # dependiendo si la petición llega en formato json puro..
             # if bundle.request.META['CONTENT_TYPE'] == 'application/json':
             #     bundle.data = tx_json_to_multipart(bundle.request.body)
