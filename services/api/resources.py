@@ -160,15 +160,14 @@ class PhotoResource(MultipartResource, ModelResource):
 
     def obj_create(self, bundle, **kwargs):
         try:
-            raise Exception('Excepcioón de prueba')
             #raise Exception('bla bla bla')
             # # dependiendo si la petición llega en formato json puro..
             # if bundle.request.META['CONTENT_TYPE'] == 'application/json':
             #     bundle.data = tx_json_to_multipart(bundle.request.body)
-            #super(type(self), self).obj_create(bundle)
+            super(type(self), self).obj_create(bundle)
             # en /media/ borra todos los archivos que comienzen por delete_me
-            #delete_files(os.path.join(MEDIA_ROOT, 'delete_me*'))
-            #return self.obj_update(bundle)
+            delete_files(os.path.join(MEDIA_ROOT, 'delete_me*'))
+            return self.obj_update(bundle)
         except Exception as ex:
             Logger.debug(str(ex))
 
