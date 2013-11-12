@@ -8,6 +8,7 @@ from tastypie.constants import ALL, ALL_WITH_RELATIONS
 
 from tastypie.resources import ModelResource
 from tastypie.validation import FormValidation
+from logger import Logger
 from services.api.resource_authorization import ResourceAuthorization
 from services.audio_helper import AudioHelper
 from services.forms import CustomUserRegisterForm, CustomUserLoginForm
@@ -39,7 +40,7 @@ class ErrorResponseMixin(object):
         return super(ErrorResponseMixin, self).error_response(request, full_errors, response_class=HttpResponse)
 
 
-class CustomUserResource(ErrorResponseMixin, ModelResource):
+class CustomUserResource(ModelResource):
     class Meta:
         resource_name = 'user'
         queryset = CustomUser.objects.all()
@@ -50,6 +51,13 @@ class CustomUserResource(ErrorResponseMixin, ModelResource):
         #     'id': ALL,
         #     'username': ALL,
         #     }
+
+    def error_response(self, request, errors, response_class=None):
+        full_errors = {
+            'status': 'error',
+            'reason': errors['user']
+        }
+        return super(CustomUserResource, self).error_response(request, full_errors, response_class=HttpResponse)
 
     def obj_create(self, bundle, **kwargs):
         if 'social_network' in bundle.data:
@@ -151,13 +159,17 @@ class PhotoResource(MultipartResource, ModelResource):
         }
 
     def obj_create(self, bundle, **kwargs):
-        # # dependiendo si la petición llega en formato json puro..
-        # if bundle.request.META['CONTENT_TYPE'] == 'application/json':
-        #     bundle.data = tx_json_to_multipart(bundle.request.body)
-        super(type(self), self).obj_create(bundle)
-        # en /media/ borra todos los archivos que comienzen por delete_me
-        delete_files(os.path.join(MEDIA_ROOT, 'delete_me*'))
-        return self.obj_update(bundle)
+        try:
+            # raise Exception('bla bla bla')
+            # # dependiendo si la petición llega en formato json puro..
+            # if bundle.request.META['CONTENT_TYPE'] == 'application/json':
+            #     bundle.data = tx_json_to_multipart(bundle.request.body)
+            super(type(self), self).obj_create(bundle)
+            # en /media/ borra todos los archivos que comienzen por delete_me
+            delete_files(os.path.join(MEDIA_ROOT, 'delete_me*'))
+            return self.obj_update(bundle)
+        except BaseException as ex:
+            Logger.debug(str(ex))
 
     def obj_update(self, bundle, skip_errors=False, **kwargs):
         obj = super(type(self), self).obj_update(bundle)
