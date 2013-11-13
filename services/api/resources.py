@@ -155,16 +155,16 @@ class PhotoResource(MultipartResource, ModelResource):
             'user': ALL_WITH_RELATIONS,
             'category': ALL_WITH_RELATIONS,
             'id': ALL,
-            'country': ALL
+            'country': ALL,
         }
         ordering = {
             'date'
         }
 
     def obj_create(self, bundle, **kwargs):
-        Logger.debug('Subiendo foto..')
+        Logger.info('Entra en obj_create')
         try:
-            # raise Exception('bla bla bla')
+          #   raise Exception('bla bla bla')
             # # dependiendo si la petición llega en formato json puro..
             # if bundle.request.META['CONTENT_TYPE'] == 'application/json':
             #     bundle.data = tx_json_to_multipart(bundle.request.body)
@@ -172,7 +172,7 @@ class PhotoResource(MultipartResource, ModelResource):
             # en /media/ borra todos los archivos que comienzen por delete_me
             delete_files(os.path.join(MEDIA_ROOT, 'delete_me*'))
             return self.obj_update(bundle)
-        except BaseException as ex:
+        except Exception as ex:
             Logger.debug(str(ex))
 
     def obj_update(self, bundle, skip_errors=False, **kwargs):
