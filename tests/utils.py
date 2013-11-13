@@ -4,8 +4,7 @@ import os
 import shutil
 import urllib2
 from django.test.client import Client
-from services.audio_helper import AudioHelper
-from settings.common import PROJECT_ROOT, BUCKET_URL, MEDIA_TEST
+from settings.common import BUCKET_URL, MEDIA_TEST, MEDIA_ROOT
 
 
 def saved_only_one_instance_ok(instance_class):
@@ -70,7 +69,10 @@ def check_from_bucket(file_id_list, check_removed=False):
 def reset_media_test_folder():
     if os.path.exists(MEDIA_TEST):
         shutil.rmtree(MEDIA_TEST)
-    os.mkdir(MEDIA_TEST)
+    else:
+        if not os.path.exists(MEDIA_ROOT):
+            os.mkdir(MEDIA_ROOT)
+        os.mkdir(MEDIA_TEST)
 
 def reset_folder(folder_path):
     if os.path.exists(folder_path):
