@@ -69,7 +69,7 @@ class CrudPhotoTest(TestCase):
         path = os.path.join(MEDIA_TEST, 'photos',
                             'cat_' + str(new_photo.category.id),
                             'photo_' + str(new_photo.id))
-        for file_extension in ['.png', '.jpg', '.3gp']:
+        for file_extension in ['.png', '.jpg', '.mp3']:
             assert not os.path.exists(path + file_extension)
             assert not os.path.exists(path + '.p' + file_extension)
         #   AND quitamos del bucket los archivos subidos de prueba
@@ -85,6 +85,7 @@ class CrudPhotoTest(TestCase):
         assert resp.status_code == 201
         new_photo = Photo.objects.all()[0]
         assert new_photo.id is not None
+        assert new_photo.country is not None
         file_list = [
             new_photo.img.name,
             new_photo.get_img_p_name(),

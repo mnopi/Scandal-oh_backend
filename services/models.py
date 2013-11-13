@@ -3,7 +3,7 @@ import os
 
 from django.contrib.auth.models import User, UserManager
 from django.db import models
-from services.utils import delete_file, rename_to_p, S3BucketHandler
+from services.utils import rename_to_p, S3BucketHandler
 from settings.common import TEST_MODE
 
 class CustomUser(User):
@@ -63,6 +63,7 @@ class Photo(models.Model):
     latitude = models.FloatField(null=True, blank=True, default=-1)
     longitude = models.FloatField(null=True, blank=True, default=-1)
     date = models.DateTimeField(auto_now_add=True)
+    country = models.CharField(max_length=2, default='ES', null=False, blank=False)
 
     def __unicode__(self):
         return str(self.pk) + '_' + self.title

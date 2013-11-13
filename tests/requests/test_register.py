@@ -106,3 +106,11 @@ class RegisterTest(TestCase):
             'password': password_invalid,
         }
         self.__assert_error__()
+
+    def test_register_with_invalid_all(self):
+        self.data = {
+            'username': username['invalid'],
+            'email': email['invalid'],
+            'password': password_invalid,
+        }
+        self.__assert_error__()

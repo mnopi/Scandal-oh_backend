@@ -207,7 +207,7 @@ def change_directory(path_to_filename, path_to_desired_dir):
     Dada una cadena con el path abs de un archivo, se cambia para que este archivo
     apunte al directorio abs deseado
 
-    e.g. /path/to/file1.jpg -> /another/path/to/file1.jpg
+    e.g. /path/to/file1.jpg -> /desired/path/to/file1.jpg
     """
     filename = re.sub(r'^.*\/(.*\..*)$', r'\1', path_to_filename)
     return os.path.join(path_to_desired_dir, filename)

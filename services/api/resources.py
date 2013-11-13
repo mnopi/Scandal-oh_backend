@@ -46,6 +46,7 @@ class CustomUserResource(ModelResource):
         queryset = CustomUser.objects.all()
         authorization = ResourceAuthorization('user')
         always_return_data = True
+        # todo: cambiar esto para que se pueda hacer PUT sin problemas
         validation = FormValidation(form_class=CustomUserRegisterForm)
         # filtering = {
         #     'id': ALL,
@@ -60,6 +61,7 @@ class CustomUserResource(ModelResource):
         return super(CustomUserResource, self).error_response(request, full_errors, response_class=HttpResponse)
 
     def obj_create(self, bundle, **kwargs):
+        "Para el registro de usuario"
         if 'social_network' in bundle.data:
             bundle.data['password'] = '123456'
         bundle_created = super(CustomUserResource, self).obj_create(bundle, **kwargs)
@@ -152,13 +154,15 @@ class PhotoResource(MultipartResource, ModelResource):
         filtering = {
             'user': ALL_WITH_RELATIONS,
             'category': ALL_WITH_RELATIONS,
-            'id': ALL
+            'id': ALL,
+            'country': ALL
         }
         ordering = {
             'date'
         }
 
     def obj_create(self, bundle, **kwargs):
+        Logger.debug('Subiendo foto..')
         try:
             # raise Exception('bla bla bla')
             # # dependiendo si la petición llega en formato json puro..

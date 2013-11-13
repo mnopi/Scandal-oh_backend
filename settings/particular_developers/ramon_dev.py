@@ -10,14 +10,25 @@ ALLOWED_HOSTS = ['localhost:8000', '127.0.0.1', '192.168.1.129', '.compute.amazo
 
 #Ramon's local database
 #
+# DATABASES = {
+#     "default": {
+#     "ENGINE": "django.db.backends.mysql",
+#     "NAME": "scandaloh_test",
+#     "USER": "root",
+#     "PASSWORD": "",
+#     "HOST": "",
+#     "PORT": "",
+#     }
+# }
+
 DATABASES = {
     "default": {
-    "ENGINE": "django.db.backends.mysql",
-    "NAME": "scandaloh_test",
-    "USER": "root",
-    "PASSWORD": "",
-    "HOST": "",
-    "PORT": "",
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "scandaloh_dev",
+        "USER": "mnopi",
+        "PASSWORD": "1aragon1",
+        "HOST": "192.168.1.201",
+        "PORT": "",
     }
 }
 
