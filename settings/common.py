@@ -3,8 +3,15 @@ import os
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
+#
+# TENEMOS 4 ENTORNOS
 TEST_MODE = False
 UNIT_TEST_MODE = False
+TEST_SERVER_MODE = False
+DEV_MODE = False
+PROD_MODE = False
+
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -14,6 +21,7 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+# base de datos de desarrollo
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",

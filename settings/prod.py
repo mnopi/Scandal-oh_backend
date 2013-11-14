@@ -2,6 +2,9 @@
 
 from common import *
 
+import common
+common.PROD_MODE = True
+
 # Production secret
 #########################################
 SECRET_KEY = os.environ['SECRET_KEY']
