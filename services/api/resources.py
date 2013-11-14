@@ -11,7 +11,7 @@ from tastypie.validation import FormValidation
 from logger import Logger
 from services.api.resource_authorization import ResourceAuthorization
 from services.audio_helper import AudioHelper
-from services.forms import CustomUserRegisterForm, CustomUserLoginForm
+from services.forms import CustomUserRegisterForm, CustomUserLoginForm, CustomUserUpdateForm
 from services.models import *
 from services.utils import *
 from settings.common import MEDIA_ROOT
@@ -46,8 +46,6 @@ class CustomUserResource(ModelResource):
         queryset = CustomUser.objects.all()
         authorization = ResourceAuthorization('user')
         always_return_data = True
-        # todo: cambiar esto para que se pueda hacer PUT sin problemas
-        validation = FormValidation(form_class=CustomUserRegisterForm)
         # filtering = {
         #     'id': ALL,
         #     'username': ALL,
@@ -62,12 +60,17 @@ class CustomUserResource(ModelResource):
 
     def obj_create(self, bundle, **kwargs):
         "Para el registro de usuario"
+        self._meta.validation = FormValidation(form_class=CustomUserRegisterForm)
         if 'social_network' in bundle.data:
             bundle.data['password'] = '123456'
         bundle_created = super(CustomUserResource, self).obj_create(bundle, **kwargs)
         resp = self.full_dehydrate(bundle_created)
         resp.data['status'] = 'ok'
         return resp
+
+    def obj_update(self, bundle, skip_errors=False, **kwargs):
+        self._meta.validation = FormValidation(form_class=CustomUserUpdateForm)
+        return super(CustomUserResource, self).obj_update(bundle, **kwargs)
 
     def get_dehydrated_user(self, user_obj, request):
         """
@@ -92,6 +95,14 @@ class CustomUserResource(ModelResource):
                 username = posted_data['username']
                 email = posted_data['email']
                 user = authenticate(username=username, from_social_network=True)
+                # si no aparece como registrado desde facebook se crea
+                if not user:
+                    user = CustomUser.objects.create(
+                        username=username,
+                        email=email,
+                        password='123456',
+                        social_network=1
+                    )
             else:
                 username = email = posted_data['username_email']
                 password = posted_data['password']
@@ -118,7 +129,7 @@ class CustomUserResource(ModelResource):
                     if user is not None:
                         if user.is_active:
                             login(request, user)
-                            resp_ok['user_uri'] = user.id
+                            resp_ok['user_uri'] = self.get_dehydrated_user(user, request)['resource_uri']
                             resp = resp_ok
                     else:
                         # email ok pero password no
@@ -132,7 +143,10 @@ class CustomUserResource(ModelResource):
 
             # si no están bien los campos del formulario devolverá un error
             if not 'social_network' in posted_data:
-                form = CustomUserLoginForm({'username_email': posted_data['username_email'], 'password': posted_data['password']})
+                form = CustomUserLoginForm({
+                    'username_email': posted_data['username_email'],
+                    'password': posted_data['password']
+                })
                 if not form.is_valid():
                     resp_error['reason'] = 'invalid form data'
                     resp_error['reason_details'] = form.errors
@@ -162,18 +176,20 @@ class PhotoResource(MultipartResource, ModelResource):
         }
 
     def obj_create(self, bundle, **kwargs):
-        Logger.info('Entra en obj_create')
         try:
-          #   raise Exception('bla bla bla')
-            # # dependiendo si la petición llega en formato json puro..
-            # if bundle.request.META['CONTENT_TYPE'] == 'application/json':
-            #     bundle.data = tx_json_to_multipart(bundle.request.body)
+            img = bundle.data['img']
+            del bundle.data['img']
+            sound = None
+            if 'sound' in bundle.data:
+                sound = bundle.data['sound']
+                del bundle.data['sound']
             super(type(self), self).obj_create(bundle)
-            # en /media/ borra todos los archivos que comienzen por delete_me
-            delete_files(os.path.join(MEDIA_ROOT, 'delete_me*'))
+            bundle.data['img'] = img
+            if sound:
+                bundle.data['sound'] = sound
             return self.obj_update(bundle)
         except Exception as ex:
-            Logger.debug(str(ex))
+            Logger.error(str(ex))
 
     def obj_update(self, bundle, skip_errors=False, **kwargs):
         obj = super(type(self), self).obj_update(bundle)
@@ -193,8 +209,8 @@ class PhotoResource(MultipartResource, ModelResource):
             bundle.obj.sound.name = file_id
             bundle.obj.save()
             S3BucketHandler.push_file(audio_converted, file_id)
-        # nos aseguramos que dejamos /media limpia
-        reset_folder(MEDIA_ROOT)
+        # todo: si se edita una foto que tenía sonido a sin sonido, entonces eliminarlo
+        # del bucket
         return obj
 
     def obj_delete(self, bundle, **kwargs):

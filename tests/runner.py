@@ -1,8 +1,9 @@
 from django.contrib.auth.models import Group
+from django.core.management import call_command
+from django.db import connection
 from django.test import LiveServerTestCase, TestCase
 from django_nose import NoseTestSuiteRunner
 from splinter import Browser
-from settings.common import MEDIA_TEST
 from settings import common
 from tests.utils import reset_media_test_folder
 

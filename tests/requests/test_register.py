@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from django.test import TestCase
+import requests
 import simplejson
 from settings.common import API_BASE_URI
 from tests.factories import CustomUserFactory, FacebookUserFactory

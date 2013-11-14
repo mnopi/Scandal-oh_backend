@@ -53,7 +53,7 @@ class CrudUserTest(TestCase):
         assert resp.status_code == 200
         assert simplejson.loads(resp.content)['username'] is not None
 
-    def test_update_user(self):
+    def test_update_user_email(self):
         # given
         CustomUserFactory(email='original@yo.com')
         # when
@@ -63,6 +63,17 @@ class CrudUserTest(TestCase):
         # then
         assert resp.status_code == 200
         assert simplejson.loads(resp.content)['email'] == email_edited
+
+    def test_update_user_password(self):
+        # given
+        CustomUserFactory(password='123456')
+        # when
+        password_edited = 'aa12345'
+        data = simplejson.dumps({'password': password_edited})
+        resp = client.put(API_BASE_URI + 'user/1/', data=data, content_type='application/json')
+        # then
+        assert resp.status_code == 200
+        assert simplejson.loads(resp.content)['password'] == password_edited
 
     def test_delete_user(self):
         # given

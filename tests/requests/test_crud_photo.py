@@ -8,7 +8,7 @@ from settings.common import TEST_IMGS_PATH, API_BASE_URI
 from settings.test import MEDIA_TEST
 from tests.factories import *
 
-from tests.utils import client, check_from_bucket, reset_folder
+from tests.utils import client, check_from_bucket, reset_media_test_folder
 
 
 def create_photo_with_sound():
@@ -23,6 +23,7 @@ def create_photo_with_sound():
             data = {
                 "user": "/api/v1/user/1/",
                 "category": "/api/v1/category/1/",
+                "country": "VE",
                 "title": "This is a title bla bla bla",
                 "img": img,
                 "sound": sound
@@ -49,7 +50,7 @@ def create_photo_without_sound():
 
 class CrudPhotoTest(TestCase):
     def setUp(self):
-        reset_folder(MEDIA_TEST)
+        reset_media_test_folder()
 
     def test_create_photo_with_sound(self):
         resp = create_photo_with_sound()
@@ -58,6 +59,7 @@ class CrudPhotoTest(TestCase):
         assert resp.status_code == 201
         new_photo = Photo.objects.all()[0]
         assert new_photo.id is not None
+        assert new_photo.country == 'VE'
         file_list = [
             new_photo.img.name,
             new_photo.get_img_p_name(),

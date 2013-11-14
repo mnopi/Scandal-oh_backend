@@ -41,6 +41,7 @@ class LoginTest(TestCase):
         self.resp_content = simplejson.loads(self.resp.content)
         assert self.resp_content['status'] == 'ok'
         assert self.resp_content['user_uri'] is not None
+        assert type(self.resp_content['user_uri']) is str
 
     def __assert_error__(self):
         # WHEN
@@ -89,7 +90,6 @@ class LoginTest(TestCase):
             'password': password_fail,
         }
         self.__assert_error_with_invalid_password__()
-
 
     def test_login_with_email_ok_and_password_fail(self):
         self.data = {

@@ -6,6 +6,7 @@ from django.forms import ModelForm, CharField, Form, EmailField
 from django.utils.translation import gettext as _
 from services.models import CustomUser
 
+
 def validate_email_unique(value):
     value = value.encode('utf-8')
     exists = CustomUser.objects.filter(email=value)
@@ -20,6 +21,16 @@ class CustomUserRegisterForm(ModelForm):
     username = CharField(required=True, min_length=4, max_length=30, validators=[validate_alphanumeric_username])
     email = CharField(required=True, validators=[validate_alphanumeric_email, validate_email_unique])
     password = CharField(required=True, min_length=6, max_length=128)
+
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'email', 'password',]
+
+
+class CustomUserUpdateForm(ModelForm):
+    username = CharField(required=False, min_length=4, max_length=30, validators=[validate_alphanumeric_username])
+    email = CharField(required=False, validators=[validate_alphanumeric_email])
+    password = CharField(required=False, min_length=6, max_length=128)
 
     class Meta:
         model = CustomUser
