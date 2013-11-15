@@ -203,7 +203,7 @@ class PhotoResource(MultipartResource, ModelResource):
             S3BucketHandler.push_file(img_resized, bundle.obj.get_img_p_name())
         # subimos el audio convertido al bucket
         if 'sound' in bundle.data:
-            audio_converted = AudioHelper.convert(bundle.obj.sound.path)
+            audio_converted = AudioHelper.convert(bundle.obj.sound.path, delete_original=True)
             ext = get_extension(audio_converted)
             file_id = rename_extension(bundle.obj.sound.name, ext)
             bundle.obj.sound.name = file_id

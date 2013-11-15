@@ -12,7 +12,7 @@ class AudioHelper:
     DEFAULT_CONVERSION_FORMAT = 'mp3'
 
     @classmethod
-    def convert(cls, file_from, file_to=None, fmt=None):
+    def convert(cls, file_from, file_to=None, fmt=None, delete_original=False):
         fmt = fmt or cls.DEFAULT_CONVERSION_FORMAT
         file_from_fmt = get_extension(file_from)
         if file_from_fmt != fmt:
@@ -42,6 +42,10 @@ class AudioHelper:
                             # make ffmpeg shut up
                             stderr=open(os.devnull)
             )
+
+            if delete_original:
+                os.remove(file_from)
+
             return file_to
         else:
             return file_from

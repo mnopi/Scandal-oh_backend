@@ -18,8 +18,8 @@ def create_photo_with_sound():
     CategoryFactory()
     # WHEN
     #   envío la foto al servidor
-    with open(os.path.join(TEST_IMGS_PATH, 'test_img_portrait.png')) as img:
-        with open(os.path.join(TEST_SOUNDS_PATH, 'prueba de sonido.caf')) as sound:
+    with open(os.path.join(TEST_IMGS_PATH, 'test_img_portrait.png'), 'rb') as img:
+        with open(os.path.join(TEST_SOUNDS_PATH, 'prueba de sonido.caf'), 'rb') as sound:
             data = {
                 "user": "/api/v1/user/1/",
                 "category": "/api/v1/category/1/",
@@ -71,7 +71,7 @@ class CrudPhotoTest(TestCase):
         path = os.path.join(MEDIA_TEST, 'photos',
                             'cat_' + str(new_photo.category.id),
                             'photo_' + str(new_photo.id))
-        for file_extension in ['.png', '.jpg', '.mp3']:
+        for file_extension in ['.png', '.jpg', '.caf', '.3gp', '.mp3']:
             assert not os.path.exists(path + file_extension)
             assert not os.path.exists(path + '.p' + file_extension)
         #   AND quitamos del bucket los archivos subidos de prueba
