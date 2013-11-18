@@ -38,7 +38,7 @@ def create_photo_without_sound():
     CategoryFactory()
     # WHEN
     #   envío la foto al servidor
-    with open(os.path.join(TEST_IMGS_PATH, 'test_img_portrait.png')) as img:
+    with open(os.path.join(TEST_IMGS_PATH, 'test_img_portrait.png'), 'rb') as img:
         data = {
             "user": "/api/v1/user/1/",
             "category": "/api/v1/category/1/",
@@ -128,6 +128,14 @@ class CrudPhotoTest(TestCase):
         # then
         assert resp.status_code == 200
         assert simplejson.loads(resp.content)['resource_uri'] is not None
+
+    # todo: por terminar
+    # def test_read_previous_photos_from_given_one_by_country(self):
+    #     # PhotoFactory(for_list=True)
+    #     pass
+    #
+    # def test_read_new_photos_from_given_one_by_country(self):
+    #     pass
 
     def test_update_photo(self):
         # given

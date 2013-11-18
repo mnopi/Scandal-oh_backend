@@ -16,9 +16,10 @@ def validate_email_unique(value):
 validate_alphanumeric_username = RegexValidator(r'^[0-9a-zA-Z_]*$', _('Sólo están permitidos caracteres alfanuméricos'))
 validate_alphanumeric_email = RegexValidator(r'^[0-9a-zA-Z@\._]*$', _('Sólo están permitidos caracteres alfanuméricos (excepto @ y . para el email)'))
 
+username_max_length = 25
 
 class CustomUserRegisterForm(ModelForm):
-    username = CharField(required=True, min_length=4, max_length=30, validators=[validate_alphanumeric_username])
+    username = CharField(required=True, min_length=4, max_length=username_max_length, validators=[validate_alphanumeric_username])
     email = CharField(required=True, validators=[validate_alphanumeric_email, validate_email_unique])
     password = CharField(required=True, min_length=6, max_length=128)
 
@@ -28,7 +29,7 @@ class CustomUserRegisterForm(ModelForm):
 
 
 class CustomUserUpdateForm(ModelForm):
-    username = CharField(required=False, min_length=4, max_length=30, validators=[validate_alphanumeric_username])
+    username = CharField(required=False, min_length=4, max_length=username_max_length, validators=[validate_alphanumeric_username])
     email = CharField(required=False, validators=[validate_alphanumeric_email])
     password = CharField(required=False, min_length=6, max_length=128)
 

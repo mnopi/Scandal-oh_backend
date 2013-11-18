@@ -203,7 +203,9 @@ class PhotoResource(MultipartResource, ModelResource):
             S3BucketHandler.push_file(img_resized, bundle.obj.get_img_p_name())
         # subimos el audio convertido al bucket
         if 'sound' in bundle.data:
+            # convertimos audio
             audio_converted = AudioHelper.convert(bundle.obj.sound.path, delete_original=True)
+            # cambiamos la extensión del archivo al que apunta el objeto photo en BD
             ext = get_extension(audio_converted)
             file_id = rename_extension(bundle.obj.sound.name, ext)
             bundle.obj.sound.name = file_id
@@ -222,6 +224,49 @@ class PhotoResource(MultipartResource, ModelResource):
         bundle.data['longitude'] = -1 if bundle.data['longitude'] == 0 else bundle.data['longitude']
         bundle.data['img_p'] = bundle.obj.get_img_p_name()
         return bundle
+
+    def prepend_urls(self):
+        return [
+            url(r"^(?P<resource_name>%s)/(?P<pk>\d+)/(?P<country>[A-Z]{2})/previous/$"
+                % (self._meta.resource_name),
+                self.wrap_view('get_prev_photos'),
+                name="api_get_prev_photos"
+            ),
+            url(r"^(?P<resource_name>%s)/(?P<pk>\d+)/(?P<country>[A-Z]{2})/new/$"
+                % (self._meta.resource_name),
+                self.wrap_view('get_new_photos'),
+                name="api_get_new_photos"
+            ),
+        ]
+
+    def get_prev_photos(self, request, **kwargs):
+        "Muestra las 10 fotos previas a una dada, todas también con el país dado"
+        p = Photo.objects.get(pk=kwargs['pk'])
+        photos = Photo.objects.filter(
+            country=kwargs['country'],
+            date__lt=p.date
+        ).order_by('-date')[:10]
+        bundles = []
+        for p in photos:
+            bundle = self.build_bundle(obj=p, request=request)
+            bundles.append(self.full_dehydrate(bundle, for_list=True))
+        list_json = self.serialize(None, bundles, "application/json")
+        return HttpResponse(list_json, mimetype="application/json")
+
+    def get_new_photos(self, request, **kwargs):
+        "Muestra todas las fotos de un país dado, a partir de la foto dada"
+        p = Photo.objects.get(pk=kwargs['pk'])
+        photos = Photo.objects.filter(
+            country=kwargs['country'],
+            date__gt=p.date
+        ).order_by('-date')
+        bundles = []
+        for p in photos:
+            bundle = self.build_bundle(obj=p, request=request)
+            bundles.append(self.full_dehydrate(bundle, for_list=True))
+        list_json = self.serialize(None, bundles, "application/json")
+        return HttpResponse(list_json, mimetype="application/json")
+
 
 
 class CategoryResource(ModelResource):

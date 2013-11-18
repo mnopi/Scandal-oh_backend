@@ -6,7 +6,7 @@ import common
 common.DEV_MODE = True
 
 #     Estas aplicaciones solo se usaran en desarrollo..
-INSTALLED_APPS += ('south')
+INSTALLED_APPS += ('south',)
 
 
 ## DEBUG =

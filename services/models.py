@@ -3,7 +3,7 @@ import os
 
 from django.contrib.auth.models import User, UserManager
 from django.db import models
-from services.utils import rename_to_p, S3BucketHandler
+from services.utils import rename_to_p, S3BucketHandler, prepend_env_folder
 from settings.common import TEST_MODE
 
 class CustomUser(User):
@@ -37,22 +37,16 @@ class Photo(models.Model):
     def get_photo_path(self, filename):
         if self.pk:
             fileName, fileExtension = os.path.splitext(filename)
-            path = 'photos/cat_%s/photo_%s.jpg' % (self.category.id, self.id)
-            if TEST_MODE:
-                return 'test/' + path
-            return path
-        else:
-            return 'delete_me'
+            path = '%s/photos/cat_%s/photo_%s%s' % \
+                   (self.country.upper(), self.category.id, self.id, fileExtension)
+            return prepend_env_folder(path)
 
     def get_sound_path(self, filename):
         if self.pk:
             fileName, fileExtension = os.path.splitext(filename)
-            path = 'photos/cat_%s/photo_%s_sound%s' % (self.category.id, self.id, fileExtension)
-            if TEST_MODE:
-                return 'test/' + path
-            return path
-        else:
-            return 'delete_me'
+            path = '%s/photos/cat_%s/photo_%s_sound%s' % \
+                   (self.country.upper(), self.category.id, self.id, fileExtension)
+            return prepend_env_folder(path)
 
     user = models.ForeignKey(CustomUser, related_name='photos', blank=False)
     category = models.ForeignKey(Category, related_name='photos', blank=False, null=False)
@@ -67,14 +61,6 @@ class Photo(models.Model):
 
     def __unicode__(self):
         return str(self.pk) + '_' + self.title
-
-    # def save(self, *args, **kwargs):
-    #     """
-    #     Cada vez que guardamos una foto lo hacemos en
-    #     """
-    #     super(Coupon, self).save(*args, **kwargs)
-    #     if self.img:
-    #         resize_img_width(self.img.path, 350)
 
     def delete(self, *args, **kwargs):
         # if self.img:
@@ -96,7 +82,7 @@ class Photo(models.Model):
 class Comment(models.Model):
     user = models.ForeignKey(CustomUser, related_name='comments', blank=False)
     photo = models.ForeignKey(Photo, related_name='comments', blank=False)
-    text = models.TextField()
+    text = models.TextField(max_length=500)
     date = models.DateTimeField(auto_now_add=True)
 
 

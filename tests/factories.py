@@ -35,6 +35,11 @@ class PhotoFactory(DjangoModelFactory):
     img = factory.django.ImageField(color='green')
     sound = factory.django.FileField(filename=os.path.join(TEST_SOUNDS_PATH, 'prueba de sonido.3gp'))
 
+    # todo: terminar para pruebas
+    # @factory.post_generation(extract_prefix='for_list')
+    # def foo(self, create, extracted, **kwargs):
+    #     self.foo = extracted
+
 
 class CommentFactory(DjangoModelFactory):
     FACTORY_FOR = models.Comment

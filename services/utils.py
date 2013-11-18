@@ -10,7 +10,7 @@ import simplejson
 import boto
 from boto.s3.key import Key
 from settings import common
-from settings.common import TEST_IMGS_COPIES_PATH
+from settings.common import TEST_IMGS_COPIES_PATH, TEST_MODE, TEST_SERVER_MODE, PROD_MODE, DEV_MODE
 
 
 def delete_file(fileField):
@@ -224,3 +224,17 @@ def get_extension(filename):
 def rename_to_p(filename):
     "e.g. foto_1.jpg -> foto_1.p.jpg"
     return re.sub(r'(?:_a)?\.([^.]*)$', r'.p.\1', filename)
+
+
+def prepend_env_folder(path):
+    if TEST_MODE:
+        return os.path.join('test', path)
+    elif TEST_SERVER_MODE:
+        return os.path.join('test-server', path)
+    elif DEV_MODE:
+        return os.path.join('dev', path)
+    elif PROD_MODE:
+        return os.path.join('prod', path)
+    else:
+        raise Exception('Not environment mode selected')
+
