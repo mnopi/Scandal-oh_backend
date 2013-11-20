@@ -1,6 +1,6 @@
 """Testing settings."""
 
-from .common import *
+from settings.common import *
 from settings import common
 
 common.TEST_MODE = True
@@ -41,8 +41,12 @@ INSTALLED_APPS += (
 # NOSE
 #########################################
 TEST_RUNNER = 'tests.runner.MyTestRunner'
+# TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = [
     '-s', # para activar stdout (salida a consola) durante los tests
     '--verbosity=2',
 ]
+
+import os
+os.environ['DJANGO_LIVE_TEST_SERVER_ADDRESS'] = 'localhost:7000'
 #########################################

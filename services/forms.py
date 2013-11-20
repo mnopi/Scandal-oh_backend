@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.forms import ModelForm, CharField, Form, EmailField
 from django.utils.translation import gettext as _
-from services.models import CustomUser
+from services.models import *
 
 
 def validate_email_unique(value):
@@ -14,12 +14,14 @@ def validate_email_unique(value):
         raise ValidationError(_('Esta dirección email ya existe como registrada') + ': %s' % value)
 
 validate_alphanumeric_username = RegexValidator(r'^[0-9a-zA-Z_]*$', _('Sólo están permitidos caracteres alfanuméricos'))
-validate_alphanumeric_email = RegexValidator(r'^[0-9a-zA-Z@\._]*$', _('Sólo están permitidos caracteres alfanuméricos (excepto @ y . para el email)'))
+validate_alphanumeric_email = RegexValidator(r'^[0-9a-zA-Z@\._]*$', _('Sólo están permitidos caracteres alfanuméricos (excepto @ y .)'))
 
 username_max_length = 25
 
 class CustomUserRegisterForm(ModelForm):
-    username = CharField(required=True, min_length=4, max_length=username_max_length, validators=[validate_alphanumeric_username])
+    username = CharField(required=True, min_length=4, max_length=username_max_length,
+                         validators=[validate_alphanumeric_username],
+                         error_messages={'unique': _('Ya existe un usuario con este nombre')})
     email = CharField(required=True, validators=[validate_alphanumeric_email, validate_email_unique])
     password = CharField(required=True, min_length=6, max_length=128)
 
@@ -29,7 +31,9 @@ class CustomUserRegisterForm(ModelForm):
 
 
 class CustomUserUpdateForm(ModelForm):
-    username = CharField(required=False, min_length=4, max_length=username_max_length, validators=[validate_alphanumeric_username])
+    username = CharField(required=False, min_length=4, max_length=username_max_length,
+                         validators=[validate_alphanumeric_username],
+                         error_messages={'unique': _('Ya existe un usuario con este nombre')})
     email = CharField(required=False, validators=[validate_alphanumeric_email])
     password = CharField(required=False, min_length=6, max_length=128)
 
@@ -38,13 +42,12 @@ class CustomUserUpdateForm(ModelForm):
         fields = ['username', 'email', 'password',]
 
 
-class CustomUserLoginForm(Form):
+class CustomUserLoginForm(ModelForm):
     username_email = CharField(required=True, min_length=4, validators=[validate_alphanumeric_email])
-    password = CharField(required=True, min_length=6, max_length=128)
 
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'password',]
+        fields = ['password',]
 
     # def full_clean(self):
     #     super(CustomUserLoginForm, self).full_clean()
@@ -59,3 +62,14 @@ class CustomUserLoginForm(Form):
     #     return email
 
 # customUserRegisterForm = FormValidation(form_class=CustomUserRegisterForm)
+
+class PhotoForm(ModelForm):
+    class Meta:
+        model = Photo
+        fields = ['title', 'country',]
+
+
+class CommentForm(ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['text',]

@@ -5,17 +5,13 @@ from django.http import HttpResponse
 import simplejson
 from tastypie import fields
 from tastypie.constants import ALL, ALL_WITH_RELATIONS
-
 from tastypie.resources import ModelResource
 from tastypie.validation import FormValidation
 from logger import Logger
 from services.api.resource_authorization import ResourceAuthorization
 from services.audio_helper import AudioHelper
-from services.forms import CustomUserRegisterForm, CustomUserLoginForm, CustomUserUpdateForm
-from services.models import *
+from services.forms import *
 from services.utils import *
-from settings.common import MEDIA_ROOT
-from tests.utils import reset_folder
 
 
 class MultipartResource(object):
@@ -31,16 +27,17 @@ class MultipartResource(object):
             return data
         return super(MultipartResource, self).deserialize(request, data, format)
 
+
 class ErrorResponseMixin(object):
     def error_response(self, request, errors, response_class=None):
         full_errors = {
             'status': 'error',
-            'reason': errors
+            'reason': errors[self._meta.resource_name]
         }
         return super(ErrorResponseMixin, self).error_response(request, full_errors, response_class=HttpResponse)
 
 
-class CustomUserResource(ModelResource):
+class CustomUserResource(ErrorResponseMixin, ModelResource):
     class Meta:
         resource_name = 'user'
         queryset = CustomUser.objects.all()
@@ -50,13 +47,6 @@ class CustomUserResource(ModelResource):
         #     'id': ALL,
         #     'username': ALL,
         #     }
-
-    def error_response(self, request, errors, response_class=None):
-        full_errors = {
-            'status': 'error',
-            'reason': errors['user']
-        }
-        return super(CustomUserResource, self).error_response(request, full_errors, response_class=HttpResponse)
 
     def obj_create(self, bundle, **kwargs):
         "Para el registro de usuario"
@@ -156,7 +146,7 @@ class CustomUserResource(ModelResource):
             return HttpResponse(simplejson.dumps(resp), mimetype="application/json")
 
 
-class PhotoResource(MultipartResource, ModelResource):
+class PhotoResource(MultipartResource, ErrorResponseMixin, ModelResource):
     user = fields.ToOneField(CustomUserResource, 'user')
     category = fields.ToOneField('services.api.resources.CategoryResource', 'category')
 
@@ -164,6 +154,7 @@ class PhotoResource(MultipartResource, ModelResource):
         resource_name = 'photo'
         queryset = Photo.objects.all().order_by('-date')
         authorization = ResourceAuthorization('user')
+        validation = FormValidation(form_class=PhotoForm)
         always_return_data = True
         filtering = {
             'user': ALL_WITH_RELATIONS,
@@ -176,20 +167,20 @@ class PhotoResource(MultipartResource, ModelResource):
         }
 
     def obj_create(self, bundle, **kwargs):
-        try:
-            img = bundle.data['img']
-            del bundle.data['img']
-            sound = None
-            if 'sound' in bundle.data:
-                sound = bundle.data['sound']
-                del bundle.data['sound']
-            super(type(self), self).obj_create(bundle)
-            bundle.data['img'] = img
-            if sound:
-                bundle.data['sound'] = sound
-            return self.obj_update(bundle)
-        except Exception as ex:
-            Logger.error(str(ex))
+        # try:
+        img = bundle.data['img']
+        del bundle.data['img']
+        sound = None
+        if 'sound' in bundle.data:
+            sound = bundle.data['sound']
+            del bundle.data['sound']
+        super(type(self), self).obj_create(bundle)
+        bundle.data['img'] = img
+        if sound:
+            bundle.data['sound'] = sound
+        return self.obj_update(bundle)
+        # except Exception as ex:
+        #     Logger.error(str(ex))
 
     def obj_update(self, bundle, skip_errors=False, **kwargs):
         obj = super(type(self), self).obj_update(bundle)
@@ -223,6 +214,7 @@ class PhotoResource(MultipartResource, ModelResource):
         bundle.data['latitude'] = -1 if bundle.data['latitude'] == 0 else bundle.data['latitude']
         bundle.data['longitude'] = -1 if bundle.data['longitude'] == 0 else bundle.data['longitude']
         bundle.data['img_p'] = bundle.obj.get_img_p_name()
+        bundle.data['username'] = bundle.obj.user.username
         return bundle
 
     def prepend_urls(self):
@@ -244,8 +236,13 @@ class PhotoResource(MultipartResource, ModelResource):
         p = Photo.objects.get(pk=kwargs['pk'])
         photos = Photo.objects.filter(
             country=kwargs['country'],
-            date__lt=p.date
-        ).order_by('-date')[:10]
+            id__lt=p.id
+        )
+        if 'category__id' in request.GET:
+            photos = photos.filter(category__id=int(request.GET['category__id']))
+        photos = photos.order_by('-id')[:10]
+            # date__lt=p.date
+        # ).order_by('-date')[:10]
         bundles = []
         for p in photos:
             bundle = self.build_bundle(obj=p, request=request)
@@ -258,15 +255,19 @@ class PhotoResource(MultipartResource, ModelResource):
         p = Photo.objects.get(pk=kwargs['pk'])
         photos = Photo.objects.filter(
             country=kwargs['country'],
-            date__gt=p.date
-        ).order_by('-date')
+            id__gt=p.id
+        )
+        if 'category__id' in request.GET:
+            photos = photos.filter(category__id=int(request.GET['category__id']))
+        photos = photos.order_by('id')
+            # date__gt=p.date
+        # ).order_by('-date')
         bundles = []
         for p in photos:
             bundle = self.build_bundle(obj=p, request=request)
             bundles.append(self.full_dehydrate(bundle, for_list=True))
         list_json = self.serialize(None, bundles, "application/json")
         return HttpResponse(list_json, mimetype="application/json")
-
 
 
 class CategoryResource(ModelResource):
@@ -280,13 +281,15 @@ class CategoryResource(ModelResource):
         }
 
 
-class CommentResource(ModelResource):
+class CommentResource(ErrorResponseMixin, ModelResource):
     user = fields.ToOneField(CustomUserResource, 'user')
     photo = fields.ToOneField(PhotoResource, 'photo')
+
     class Meta:
         resource_name = 'comment'
         queryset = Comment.objects.all().order_by('-date')
         authorization = ResourceAuthorization('user')
+        validation = FormValidation(form_class=CommentForm)
         always_return_data = True
         filtering = {
             'user': ALL_WITH_RELATIONS,

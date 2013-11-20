@@ -4,7 +4,7 @@ from shutil import copyfile
 from PIL import Image
 from services.utils import ImgHelper
 from settings.common import TEST_IMGS_PATH, TEST_IMGS_COPIES_PATH
-from tests.runner import UnitTestCase
+from tests.testcase_classes import UnitTestCase
 from tests.utils import reset_folder
 
 

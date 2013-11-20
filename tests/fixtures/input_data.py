@@ -5,14 +5,14 @@ username = {
     'another': 'capitancock',
     'another_facebook': 'capitancock_facebook',
     'invalid': 'capitañooo',
-    }
+}
 email = {
     'existing': 'manitobueno@example.com',
     'existing_facebook': 'manitobueno_facebook@example.com',
     'another': 'yupi@yo.com',
     'another_facebook': 'yupi_facebook@yo.com',
     'invalid': 'yupi@.com',
-    }
+}
 password = 'manito666'
 # password bien escrita en formulario, pero que no existe para ningún registro
 password_fail = 'manito666@@@@@'
@@ -25,8 +25,9 @@ username_list = {
         'bizeuuu',
     ),
     'invalids': (
-        'bizeuuuñño',
-        'bizeuá sdf',
+        'bizeuuuñño', # ñ
+        'bizeuá sdf', # espacios
+        'capitanooooooooooooooooooooooooooooooooooooooooooo', # más de 25 caracteres
     )
 }
 
@@ -49,8 +50,32 @@ password_list = {
     )
 }
 
+comment_text_list = {
+    'valids': (
+        'comentario cón cañacterès rarÖos',
+    ),
+    'invalids': (
+        '',
+        'comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo comentario muy largo ',
+    )
+}
+
+photo_title_list = {
+    'valids': (
+        'título cón cañacterès rarÖos',
+    ),
+    'invalids': (
+        '',
+        'título de más de 140 caracteres título de más de 140 caracteres título de más de 140 caracteres título de más de 140 caracteres título de más de 140 caracteres título de más de 140 caracteres título de más de 140 caracteres título de más de 140 caracteres ',
+    )
+}
+
 # para logueo
 username_email_list = {
     'valids': username_list['valids'] + email_list['valids'],
-    'invalids': username_list['invalids'] + email_list['invalids'],
+    'invalids': (
+        'bizeuuuñño', # ñ
+        'bizeuá sdf', # espacios
+        'bizeuuu@?',
+    )
 }

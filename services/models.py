@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
+import datetime
 
 from django.contrib.auth.models import User, UserManager
 from django.db import models
 from services.utils import rename_to_p, S3BucketHandler, prepend_env_folder
-from settings.common import TEST_MODE
+
 
 class CustomUser(User):
     social_network = models.PositiveIntegerField(default=0, blank=True)
@@ -37,8 +38,8 @@ class Photo(models.Model):
     def get_photo_path(self, filename):
         if self.pk:
             fileName, fileExtension = os.path.splitext(filename)
-            path = '%s/photos/cat_%s/photo_%s%s' % \
-                   (self.country.upper(), self.category.id, self.id, fileExtension)
+            path = '%s/photos/cat_%s/photo_%s.jpg' % \
+                   (self.country.upper(), self.category.id, self.id)
             return prepend_env_folder(path)
 
     def get_sound_path(self, filename):
@@ -56,11 +57,16 @@ class Photo(models.Model):
     visits_count = models.PositiveIntegerField(default=0, blank=True)
     latitude = models.FloatField(null=True, blank=True, default=-1)
     longitude = models.FloatField(null=True, blank=True, default=-1)
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(default=datetime.datetime.utcnow())
     country = models.CharField(max_length=2, default='ES', null=False, blank=False)
 
     def __unicode__(self):
         return str(self.pk) + '_' + self.title
+
+    # def save(self, *args, **kwargs):
+    #     if self.date is None:
+    #         self.date = datetime.datetime.now()
+    #     super(Photo, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         # if self.img:
@@ -82,7 +88,7 @@ class Photo(models.Model):
 class Comment(models.Model):
     user = models.ForeignKey(CustomUser, related_name='comments', blank=False)
     photo = models.ForeignKey(Photo, related_name='comments', blank=False)
-    text = models.TextField(max_length=500)
+    text = models.CharField(null=False, blank=False, max_length=500)
     date = models.DateTimeField(auto_now_add=True)
 
 
@@ -102,6 +108,5 @@ class LogEntry(models.Model):
         (CRITICAL, 'CRI')
     }
     category = models.CharField(max_length=3, choices=ENTRY_CATEGORY, default=INFO)
-
     message = models.CharField(max_length=200, blank=True, null=True)
 

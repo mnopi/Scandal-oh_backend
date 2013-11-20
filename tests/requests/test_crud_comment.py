@@ -1,68 +1,79 @@
 # # -*- coding: utf-8 -*-
-from django.test import TestCase
-import simplejson
 from services.models import *
-from settings.common import API_BASE_URI
 from tests.factories import *
+from tests.fixtures.input_data import comment_text_list
+from tests.testcase_classes import RequestTestCase
 
-from tests.utils import client
 
+class CrudCommentTest(RequestTestCase):
+    resource_name = 'comment'
 
-class CrudCommentTest(TestCase):
     def test_create_comment(self):
         # given
         CommentFactory.create_batch(2)
         # when
-        data = simplejson.dumps({
+        data = {
             "user": "/api/v1/user/1/",
             "photo": "/api/v1/photo/1/",
             "text": "This is a comment bla bla bla"
-        })
-        resp = client.post(API_BASE_URI + 'comment/', data=data, content_type='application/json')
+        }
+        self._post(data)
         # then
-        assert resp.status_code == 201
+        self._assert_post_ok_201()
         new_comment = Comment.objects.all().order_by('id').reverse()[0]
         assert new_comment.text == "This is a comment bla bla bla"
         assert new_comment.user == CustomUser.objects.get(pk=new_comment.user.id)
         assert new_comment.photo == Photo.objects.get(pk=new_comment.photo.id)
         assert new_comment.id is not None
 
+    def test_create_invalid_comment(self):
+        # given
+        CustomUserFactory()
+        PhotoFactory()
+        # when
+        for text in comment_text_list['invalids']:
+            data = {
+                "user": "/api/v1/user/1/",
+                "photo": "/api/v1/photo/1/",
+                "text": text
+            }
+            self._post(data)
+            # then
+            self._assert_error_response()
+
     def test_read_comment_list(self):
         # given
         CommentFactory.create_batch(2)
         # when
-        resp = client.get(API_BASE_URI + 'comment/')
+        self._get_list()
         # then
-        assert resp.status_code == 200
-        assert len(simplejson.loads(resp.content)['objects']) == 2
+        self._assert_get_ok()
+        self._assert_resp_obj_has_length(2)
 
     def test_read_comment(self):
         # given
         CommentFactory()
         # when
-        resp = client.get(API_BASE_URI + 'comment/1/')
+        self._get_element(1)
         # then
-        assert resp.status_code == 200
-        assert simplejson.loads(resp.content)['photo'] is not None
+        self._assert_get_ok()
+        self._assert_resp_obj_has_key_not_none('photo')
 
     def test_update_comment(self):
         # given
         CommentFactory(text='comment original blahblah')
         # when
-        data = simplejson.dumps({
-            'text': 'comment edited!!'
-        })
-        resp = client.put(API_BASE_URI + 'comment/1/', data=data, content_type='application/json')
+        self._put(1, {'text': 'comment edited!!'})
         # then
-        assert resp.status_code == 200
-        assert simplejson.loads(resp.content)['text'] == 'comment edited!!'
+        self._assert_put_ok()
+        self._assert_resp_obj_has_key_equals_to('text', 'comment edited!!')
 
     def test_delete_comment(self):
         # given
         CommentFactory()
         # when
-        resp = client.delete(API_BASE_URI + 'comment/1/')
+        self._delete(1)
         # then
-        assert resp.status_code == 204
+        self._assert_delete_ok()
         assert Comment.objects.all().count() == 0
 

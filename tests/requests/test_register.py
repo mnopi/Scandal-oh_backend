@@ -85,28 +85,31 @@ class RegisterTest(TestCase):
         self.__assert_error__()
 
     def test_register_with_invalid_username(self):
-        self.data = {
-            'username': username['invalid'],
-            'email': email['another'],
-            'password': password,
-        }
-        self.__assert_error__()
+        for u in username_list['invalids']:
+            self.data = {
+                'username': u,
+                'email': email['another'],
+                'password': password,
+            }
+            self.__assert_error__()
 
     def test_register_with_invalid_email(self):
-        self.data = {
-            'username': username['another'],
-            'email': email['invalid'],
-            'password': password,
-        }
-        self.__assert_error__()
+        for e in email_list['invalids']:
+            self.data = {
+                'username': username['another'],
+                'email': e,
+                'password': password,
+            }
+            self.__assert_error__()
 
     def test_register_with_invalid_password(self):
-        self.data = {
-            'username': username['another'],
-            'email': email['another'],
-            'password': password_invalid,
-        }
-        self.__assert_error__()
+        for p in password_list['invalids']:
+            self.data = {
+                'username': username['another'],
+                'email': email['another'],
+                'password': p,
+            }
+            self.__assert_error__()
 
     def test_register_with_invalid_all(self):
         self.data = {

@@ -3,7 +3,9 @@
 import os
 import shutil
 import urllib2
+from django.contrib.auth.models import Group
 from django.test.client import Client
+import simplejson
 from settings.common import BUCKET_URL, MEDIA_TEST, MEDIA_ROOT
 
 
@@ -78,3 +80,9 @@ def reset_folder(folder_path):
     if os.path.exists(folder_path):
         shutil.rmtree(folder_path)
     os.mkdir(folder_path)
+
+
+def init_database():
+    Group.objects.create(name='enclosure_owners')
+    Group.objects.create(name='shop_owners')
+

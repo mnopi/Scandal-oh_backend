@@ -1,4 +1,6 @@
 import os
+import datetime
+from dateutil.relativedelta import relativedelta
 from django.utils.timezone import now
 from services import models
 import factory
@@ -35,10 +37,20 @@ class PhotoFactory(DjangoModelFactory):
     img = factory.django.ImageField(color='green')
     sound = factory.django.FileField(filename=os.path.join(TEST_SOUNDS_PATH, 'prueba de sonido.3gp'))
 
-    # todo: terminar para pruebas
-    # @factory.post_generation(extract_prefix='for_list')
-    # def foo(self, create, extracted, **kwargs):
-    #     self.foo = extracted
+    @factory.post_generation
+    def for_list(self, create, extracted, **kwargs):
+        """
+        Generamos una lista de fotos con diferentes fechas, en este caso aparecen
+        8 fotos, subidas cada 3 meses
+        """
+        if extracted:
+            num_photos = 8
+            month_interval = 3
+            base = datetime.datetime.today()
+            dateList = [base - relativedelta(months=x*month_interval)
+                        for x in range(0, num_photos)]
+            for d in dateList:
+                PhotoFactory(date=d)
 
 
 class CommentFactory(DjangoModelFactory):

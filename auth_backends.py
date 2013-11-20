@@ -14,7 +14,7 @@ class CustomUserModelBackend(ModelBackend):
             # todo: a securizar de manera que desde fb no sólamente haya que meter username..
             if from_social_network:
                 return user
-            elif user.check_password(password):
+            elif user.check_password(password) and user.social_network == 0:
                 return user
         except self.user_class.DoesNotExist:
             return None

@@ -7,24 +7,28 @@ from services.utils import S3BucketHandler
 from settings.common import TEST_IMGS_PATH, API_BASE_URI
 from settings.test import MEDIA_TEST
 from tests.factories import *
+from tests.fixtures.input_data import *
+from tests.testcase_classes import RequestTestCase
 
 from tests.utils import client, check_from_bucket, reset_media_test_folder
 
 
-def create_photo_with_sound():
+def create_photo_with_sound(title=None, country=None):
     # GIVEN
     #   un usuario y una categoría
     CustomUserFactory()
     CategoryFactory()
     # WHEN
     #   envío la foto al servidor
+    title = "This is a title bla bla bla" if title is None else title
+    country = "VE" if country is None else country
     with open(os.path.join(TEST_IMGS_PATH, 'test_img_portrait.png'), 'rb') as img:
         with open(os.path.join(TEST_SOUNDS_PATH, 'prueba de sonido.caf'), 'rb') as sound:
             data = {
                 "user": "/api/v1/user/1/",
                 "category": "/api/v1/category/1/",
-                "country": "VE",
-                "title": "This is a title bla bla bla",
+                "country": country,
+                "title": title,
                 "img": img,
                 "sound": sound
             }
@@ -48,7 +52,7 @@ def create_photo_without_sound():
         return client.post(API_BASE_URI + 'photo/', data=data)
 
 
-class CrudPhotoTest(TestCase):
+class CrudPhotoTest(RequestTestCase):
     def setUp(self):
         reset_media_test_folder()
 
@@ -106,6 +110,17 @@ class CrudPhotoTest(TestCase):
         S3BucketHandler.remove_file(new_photo.get_img_p_name())
         check_from_bucket(file_list, check_removed=True)
 
+    def test_create_photo_with_invalid_title(self):
+        # given
+        CategoryFactory()
+        CustomUserFactory()
+        # when
+        # invalid title
+        for title in photo_title_list['invalids']:
+            self.resp = create_photo_with_sound(title=title)
+            # then
+            self._assert_error_response()
+
     def test_read_photo_list(self):
         # given
         PhotoFactory.create_batch(2)
@@ -128,13 +143,20 @@ class CrudPhotoTest(TestCase):
         # then
         assert resp.status_code == 200
         assert simplejson.loads(resp.content)['resource_uri'] is not None
+        assert simplejson.loads(resp.content)['username'] is not None
 
     # todo: por terminar
     # def test_read_previous_photos_from_given_one_by_country(self):
-    #     # PhotoFactory(for_list=True)
-    #     pass
+    #     # given
+    #     PhotoFactory(for_list=True)
+    #     # when
+    #     resp = client.get(API_BASE_URI + 'photo/1/')
     #
+    #     pass
+
     # def test_read_new_photos_from_given_one_by_country(self):
+    #     # given
+    #     PhotoFactory(for_list=True)
     #     pass
 
     def test_update_photo(self):
